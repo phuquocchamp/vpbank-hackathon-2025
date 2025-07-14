@@ -1,4 +1,3 @@
-import React from 'react';
 
 const Conversation = () => {
   return (
@@ -7,7 +6,7 @@ const Conversation = () => {
         <h1 className="text-2xl font-bold text-gray-900 mb-4">Conversations</h1>
         <p className="text-gray-600">Manage your conversations here.</p>
       </div>
-      
+
       <div className="bg-white rounded-lg shadow">
         <div className="p-6">
           <h2 className="text-lg font-semibold text-gray-900 mb-4">Recent Conversations</h2>
