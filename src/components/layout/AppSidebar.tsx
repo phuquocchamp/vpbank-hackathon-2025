@@ -6,10 +6,7 @@ import {
   // HelpCircle,
   Home,
   // Inbox,
-  MessageCircle,
-  // Search,
-  // Settings,
-  Users,
+  MessageCircle
 } from 'lucide-react';
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
@@ -17,7 +14,6 @@ import { Link, useLocation } from 'react-router-dom';
 import {
   Sidebar,
   SidebarContent,
-  SidebarFooter,
   SidebarGroup,
   SidebarGroupContent,
   SidebarGroupLabel,
@@ -28,35 +24,20 @@ import {
   SidebarRail,
   SidebarTrigger
 } from '@/components/ui/sidebar';
-import { ROUTES } from '@/config/routes';
+import { CLIENT_ROUTES } from '@/config/routes';
 
 // Menu items.
 const items = [
   {
     title: 'Dashboard',
-    url: ROUTES.DASHBOARD,
+    url: CLIENT_ROUTES.DASHBOARD,
     icon: Home,
   },
   {
     title: 'Conversations',
-    url: ROUTES.CONVERSATION,
+    url: CLIENT_ROUTES.CONVERSATION,
     icon: MessageCircle,
   },
-  {
-    title: 'Analytics',
-    url: '/analytics',
-    icon: BarChart3,
-  },
-  // {
-  //   title: 'Users',
-  //   url: '/users',
-  //   icon: Users,
-  // },
-  // {
-  //   title: 'Reports',
-  //   url: '/reports',
-  //   icon: FileText,
-  // },
 ];
 
 // Application items
@@ -102,8 +83,8 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const location = useLocation();
 
   const isActive = (url: string) => {
-    if (url === ROUTES.HOME || url === ROUTES.DASHBOARD) {
-      return location.pathname === ROUTES.HOME || location.pathname === ROUTES.DASHBOARD;
+    if (url === CLIENT_ROUTES.HOME || url === CLIENT_ROUTES.DASHBOARD) {
+      return location.pathname === CLIENT_ROUTES.HOME || location.pathname === CLIENT_ROUTES.DASHBOARD;
     }
     return location.pathname.startsWith(url);
   };
@@ -114,7 +95,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton size="lg" asChild>
-              <Link to={ROUTES.HOME}>
+              <Link to={CLIENT_ROUTES.HOME}>
                 <SidebarTrigger>
                   <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground">
                     <BarChart3 className="size-4" />
@@ -154,59 +135,10 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           </SidebarGroupContent>
         </SidebarGroup>
 
-        {/* Application */}
-        {/* <SidebarGroup>
-          <SidebarGroupLabel>Application</SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {appItems.map((item) => (
-                <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton 
-                    asChild 
-                    isActive={isActive(item.url)}
-                    tooltip={item.title}
-                  >
-                    <Link to={item.url}>
-                      <item.icon />
-                      <span>{item.title}</span>
-                      {item.badge && (
-                        <span className="ml-auto bg-red-500 text-white text-xs rounded-full px-2 py-0.5">
-                          {item.badge}
-                        </span>
-                      )}
-                    </Link>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup> */}
-
-        {/* Settings */}
-        {/* <SidebarGroup>
-          <SidebarGroupLabel>Settings</SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {settingsItems.map((item) => (
-                <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton 
-                    asChild 
-                    isActive={isActive(item.url)}
-                    tooltip={item.title}
-                  >
-                    <Link to={item.url}>
-                      <item.icon />
-                      <span>{item.title}</span>
-                    </Link>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup> */}
+        
       </SidebarContent>
 
-      <SidebarFooter>
+      {/* <SidebarFooter>
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton>
@@ -220,7 +152,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>
-      </SidebarFooter>
+      </SidebarFooter> */}
       
       <SidebarRail />
     </Sidebar>

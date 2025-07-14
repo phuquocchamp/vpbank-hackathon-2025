@@ -41,7 +41,7 @@ const adminItems = [
     url: '/admin/reports',
     icon: FileText,
   },
-  {
+  { 
     title: 'Analytics',
     url: '/admin/analytics',
     icon: Database,

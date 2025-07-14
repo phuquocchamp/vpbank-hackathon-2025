@@ -1,5 +1,5 @@
 import { Link, useLocation } from 'react-router-dom';
-import { ROUTES } from '../../config/routes';
+import { CLIENT_ROUTES, ADMIN_ROUTES } from '../../config/routes';
 
 const Sidebar = () => {
   const location = useLocation();
@@ -7,8 +7,8 @@ const Sidebar = () => {
   const isActive = (path: string) => location.pathname === path;
 
   const menuItems = [
-    { path: ROUTES.DASHBOARD, label: 'Dashboard', icon: '📊' },
-    { path: ROUTES.CONVERSATION, label: 'Conversations', icon: '💬' },
+    { path: CLIENT_ROUTES.DASHBOARD, label: 'Dashboard', icon: '📊' },
+    { path: CLIENT_ROUTES.CONVERSATION, label: 'Conversations', icon: '💬' },
   ];
 
   return (
