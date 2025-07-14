@@ -12,7 +12,8 @@ import Analytics from '../../pages/client/analytics/Analytics';
 // Admin pages
 import AdminDashboard from '../../pages/admin/dashboard/AdminDashboard';
 import UserManagement from '../../pages/admin/user/UserManagement';
-import { PlaceholderPage } from './test';
+import { PlaceholderPage } from '@/components/common/SampleComponent';
+
 
 // Create router
 export const router = createBrowserRouter([
