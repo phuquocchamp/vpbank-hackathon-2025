@@ -1,8 +1,9 @@
 export const CLIENT_ROUTES = {
-  HOME: '/client/',
+  HOME: '/client',
   DASHBOARD: '/client/dashboard',
-  CONVERSATION: '/client/conversation',
-  CONVERSATION_DETAIL: '/client/conversation/:id',
+  CONVERSATION: '/client/conversations',
+  CONVERSATION_DETAIL: '/client/conversations/:id',
+  ANALYTICS: '/client/analytics',
 } as const;
 
 export const ADMIN_ROUTES = {

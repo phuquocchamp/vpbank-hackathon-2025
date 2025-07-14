@@ -1,24 +1,20 @@
-import { SidebarProvider } from '@/components/ui/sidebar';
 import { Outlet } from 'react-router-dom';
-import { AppSidebar } from './AppSidebar';
+import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar';
+import { DynamicSidebar } from './DynamicSidebar';
 import Header from './Header';
 
-function ClientLayout() {
+const Layout = () => {
   return (
     <SidebarProvider>
-      <div className="flex h-screen w-full">
-        <AppSidebar />
-        <div className="flex flex-1 flex-col overflow-hidden">
-          <Header />
-          <main className="flex-1 overflow-hidden">
-            <div className="h-full p-6 overflow-y-auto">
-              <Outlet />
-            </div>
-          </main>
+      <DynamicSidebar />
+      <SidebarInset>
+        <Header />
+        <div className="flex flex-1 flex-col gap-4 p-4">
+          <Outlet />
         </div>
-      </div>
+      </SidebarInset>
     </SidebarProvider>
   );
-}
+};
 
-export default ClientLayout;
+export default Layout;

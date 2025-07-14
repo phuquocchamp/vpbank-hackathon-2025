@@ -1,48 +1,38 @@
-import React from 'react';
+import { useAuth } from '@/contexts/AuthContext';
 import { Navigate, useLocation } from 'react-router-dom';
-
-// Mock user type - thay thế bằng context/store thực tế
-interface User {
-  id: string;
-  email: string;
-  role: 'admin' | 'client';
-  name: string;
-}
-
-// Mock authentication hook - thay thế bằng authentication logic thực tế
-const useAuth = () => {
-  // Giả lập user đã đăng nhập
-  const user: User | null = {
-    id: '1',
-    email: 'user@vpbank.com',
-    role: 'client', // Thay đổi thành 'admin' để test admin routes
-    name: 'Test User'
-  };
-  
-  const isAuthenticated = !!user;
-  
-  return { user, isAuthenticated };
-};
+import { ReactNode } from 'react';
 
 interface ProtectedRouteProps {
-  children: React.ReactNode;
-  requiredRole?: 'admin' | 'client';
+  children: ReactNode;
+  requiredRole?: 'user' | 'admin';
+  fallbackPath?: string;
 }
 
-export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ 
+const ProtectedRoute = ({ 
   children, 
-  requiredRole 
-}) => {
-  const { user, isAuthenticated } = useAuth();
+  requiredRole,
+  fallbackPath = '/login' 
+}: ProtectedRouteProps) => {
+  const { isAuthenticated, user, isLoading } = useAuth();
   const location = useLocation();
 
-  if (!isAuthenticated) {
-    // Redirect to login page
-    return <Navigate to="/login" state={{ from: location }} replace />;
+  // Show loading spinner while checking auth
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+      </div>
+    );
   }
 
+  // Not authenticated - redirect to login
+  if (!isAuthenticated) {
+    return <Navigate to={fallbackPath} state={{ from: location }} replace />;
+  }
+
+  // Check role-based access
   if (requiredRole && user?.role !== requiredRole) {
-    // Redirect to appropriate dashboard based on user role
+    // Redirect to appropriate dashboard based on user's actual role
     const redirectPath = user?.role === 'admin' ? '/admin' : '/client';
     return <Navigate to={redirectPath} replace />;
   }

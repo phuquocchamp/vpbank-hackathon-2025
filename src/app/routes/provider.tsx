@@ -1,11 +1,14 @@
 import { RouterProvider } from 'react-router-dom';
 import { ThemeProvider } from '@/components/theme-provider';
+import { AuthProvider } from '@/contexts/AuthContext';
 import { router } from './router';
 
 const AppProvider = () => {
   return (
     <ThemeProvider defaultTheme="system" storageKey="vpbank-ui-theme">
-      <RouterProvider router={router} />
+      <AuthProvider>
+        <RouterProvider router={router} />
+      </AuthProvider>
     </ThemeProvider>
   );
 };

@@ -1,11 +1,6 @@
 import {
   BarChart3,
-  // Bell,
-  // Calendar,
-  // FileText,
-  // HelpCircle,
   Home,
-  // Inbox,
   MessageCircle
 } from 'lucide-react';
 import React from 'react';

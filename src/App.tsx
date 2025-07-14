@@ -1,11 +1,17 @@
 
-function App() {
+import { RouterProvider } from 'react-router-dom';
+import { ThemeProvider } from '@/components/theme-provider';
+import { AuthProvider } from '@/contexts/AuthContext';
+import { router } from './app/routes/router';
 
+function App() {
   return (
-    <div>
-      <h1 className="text-3xl font-bold underline">Hello World</h1>
-    </div>
-  )
+    <ThemeProvider defaultTheme="system" storageKey="vpbank-ui-theme">
+      <AuthProvider>
+        <RouterProvider router={router} />
+      </AuthProvider>
+    </ThemeProvider>
+  );
 }
 
-export default App
+export default App;
