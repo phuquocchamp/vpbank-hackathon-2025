@@ -1,21 +1,28 @@
 import { useAuth } from '@/contexts/AuthContext';
+import { useConversation } from '@/contexts/ConversationContext';
 import {
   Activity,
   BarChart3,
-  Bell,
-  Calendar,
   Database,
   FileText,
   HelpCircle,
   Home,
-  Inbox,
   MessageCircle,
-  Search,
+  MoreHorizontal,
+  Plus,
+  Trash2,
   Users
 } from 'lucide-react';
-import React from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { useEffect } from 'react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 
+import { Button } from '@/components/ui/button';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import {
   Sidebar,
   SidebarContent,
@@ -86,20 +93,6 @@ const menuItems: MenuItem[] = [
     icon: FileText,
     roles: ['ADMIN']
   },
-  // {
-  //   title: 'Security',
-  //   url: '/admin/security',
-  //   icon: Shield,
-  //   roles: ['ADMIN']
-  // },
-
-  // // Shared items (both roles can access)
-  // {
-  //   title: 'Settings',
-  //   url: '/settings',
-  //   icon: Settings,
-  //   roles: ['USER', 'ADMIN']
-  // },
   {
     title: 'Help & Support',
     url: ADMIN_ROUTES.HELP,
@@ -108,37 +101,17 @@ const menuItems: MenuItem[] = [
   }
 ];
 
-const applicationItems: MenuItem[] = [
-  {
-    title: 'Search',
-    url: '/search',
-    icon: Search,
-    roles: ['USER', 'ADMIN']
-  },
-  {
-    title: 'Calendar',
-    url: '/calendar',
-    icon: Calendar,
-    roles: ['USER', 'ADMIN']
-  },
-  {
-    title: 'Inbox',
-    url: '/inbox',
-    icon: Inbox,
-    badge: '12',
-    roles: ['USER', 'ADMIN']
-  },
-  {
-    title: 'Notifications',
-    url: '/notifications',
-    icon: Bell,
-    roles: ['USER', 'ADMIN']
-  }
-];
-
 export function DynamicSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const { user } = useAuth();
+  const { state, createNewConversation, loadConversations, deleteConversation } = useConversation();
   const location = useLocation();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (user?.role === 'ADMIN') {
+      loadConversations();
+    }
+  }, [user, loadConversations]);
 
   const isActive = (url: string) => {
     if (url === '/client' && user?.role === 'USER') {
@@ -150,12 +123,44 @@ export function DynamicSidebar({ ...props }: React.ComponentProps<typeof Sidebar
     return location.pathname.startsWith(url);
   };
 
+  const handleNewChat = async () => {
+    try {
+      const newConversation = await createNewConversation();
+      navigate(`/admin/conversations/${newConversation.id}`);
+    } catch (error) {
+      console.error('Failed to create new chat:', error);
+    }
+  };
+
+  const handleDeleteConversation = async (conversationId: string, event: React.MouseEvent) => {
+    event.preventDefault();
+    event.stopPropagation();
+
+    try {
+      await deleteConversation(conversationId);
+      if (location.pathname === `/admin/conversations/${conversationId}`) {
+        navigate('/admin');
+      }
+    } catch (error) {
+      console.error('Failed to delete conversation:', error);
+    }
+  };
+
+  const formatDate = (date: Date | string) => {
+    const dateObj = date instanceof Date ? date : new Date(date);
+    if (isNaN(dateObj.getTime())) return '';
+    const now = new Date();
+    const diffTime = Math.abs(now.getTime() - dateObj.getTime());
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+    if (diffDays === 1) return 'Today';
+    if (diffDays === 2) return 'Yesterday';
+    if (diffDays <= 7) return `${diffDays} days ago`;
+    return dateObj.toLocaleDateString();
+  };
+
   // Filter menu items based on user role
   const filteredMainItems = menuItems.filter(item =>
-    item.roles.includes(user?.role || 'USER')
-  );
-
-  const filteredAppItems = applicationItems.filter(item =>
     item.roles.includes(user?.role || 'USER')
   );
 
@@ -176,6 +181,8 @@ export function DynamicSidebar({ ...props }: React.ComponentProps<typeof Sidebar
   };
 
   const brandInfo = getBrandInfo();
+  console.log("Conversations", state.conversations);
+  console.log('Conversations', state.conversations.length);
 
   return (
     <Sidebar collapsible="icon" {...props}>
@@ -200,6 +207,82 @@ export function DynamicSidebar({ ...props }: React.ComponentProps<typeof Sidebar
       </SidebarHeader>
 
       <SidebarContent>
+        {/* Admin Chat Section */}
+        {user?.role === 'ADMIN' && (
+          <SidebarGroup>
+            <SidebarGroupLabel>Chat</SidebarGroupLabel>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                <SidebarMenuItem>
+                  <Button
+                    onClick={handleNewChat}
+                    variant="outline"
+                    size="sm"
+                    className="w-full justify-start"
+                    disabled={state.loading}
+                  >
+                    <Plus className="size-4 mr-2" />
+                    New Chat
+                  </Button>
+                </SidebarMenuItem>
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        )}
+
+        {/* Conversation History for Admin */}
+
+        {user?.role === 'ADMIN' && state.conversations.length > 0 && (
+          <SidebarGroup>
+            <SidebarGroupLabel>Recent Conversations</SidebarGroupLabel>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                {state.conversations.slice(0, 10).map((conversation) => (
+                  <SidebarMenuItem key={conversation.id}>
+                    <SidebarMenuButton
+                      asChild
+                      isActive={location.pathname === `/admin/conversations/${conversation.id}`}
+                      tooltip={conversation.title}
+                    >
+                      <Link to={`/admin/conversations/${conversation.id}`} className="group">
+                        <MessageCircle className="size-4" />
+                        <div className="flex-1 min-w-0">
+                          <div className="truncate text-sm font-medium">
+                            {conversation.title}
+                          </div>
+                          <div className="text-xs text-muted-foreground">
+                            {formatDate(conversation.updatedAt)}
+                          </div>
+                        </div>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-6 w-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
+                            >
+                              <MoreHorizontal className="size-3" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem
+                              onClick={(e) => handleDeleteConversation(conversation.id, e)}
+                              className="text-red-600"
+                            >
+                              <Trash2 className="size-4 mr-2" />
+                              Delete
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </Link>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                ))}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        )}
+
         {/* Main Navigation */}
         <SidebarGroup>
           <SidebarGroupLabel>Main</SidebarGroupLabel>
@@ -227,36 +310,6 @@ export function DynamicSidebar({ ...props }: React.ComponentProps<typeof Sidebar
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
-
-        {/* Application Items */}
-        {filteredAppItems.length > 0 && (
-          <SidebarGroup>
-            <SidebarGroupLabel>Application</SidebarGroupLabel>
-            <SidebarGroupContent>
-              <SidebarMenu>
-                {filteredAppItems.map((item) => (
-                  <SidebarMenuItem key={item.title}>
-                    <SidebarMenuButton
-                      asChild
-                      isActive={isActive(item.url)}
-                      tooltip={item.title}
-                    >
-                      <Link to={item.url}>
-                        <item.icon />
-                        <span>{item.title}</span>
-                        {item.badge && (
-                          <span className="ml-auto text-xs bg-red-500 text-white px-1.5 py-0.5 rounded-full">
-                            {item.badge}
-                          </span>
-                        )}
-                      </Link>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                ))}
-              </SidebarMenu>
-            </SidebarGroupContent>
-          </SidebarGroup>
-        )}
       </SidebarContent>
 
       <SidebarRail />
