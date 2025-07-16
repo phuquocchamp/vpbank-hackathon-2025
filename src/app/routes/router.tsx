@@ -12,7 +12,10 @@ import Analytics from '../../pages/client/analytics/Analytics';
 // Admin pages
 import AdminDashboard from '../../pages/admin/dashboard/AdminDashboard';
 import UserManagement from '../../pages/admin/user/UserManagement';
+import KnowledgeBase from '@/pages/admin/knowledge-base/KnowledgeBase';
+import AdminHelp from '@/pages/admin/help/AdminHelp';
 import { PlaceholderPage } from '@/components/common/SampleComponent';
+import SystemReport from '@/pages/admin/report/SystemReport';
 
 
 // Create router
@@ -78,16 +81,16 @@ export const router = createBrowserRouter([
         element: <UserManagement />,
       },
       {
+        path: 'knowledge-base',
+        element: <KnowledgeBase />,
+      },
+      {
+        path: 'help',
+        element: <AdminHelp />,
+      },
+      {
         path: 'reports',
-        element: <PlaceholderPage title="System Reports" />,
-      },
-      {
-        path: 'analytics',
-        element: <PlaceholderPage title="Admin Analytics" />,
-      },
-      {
-        path: 'security',
-        element: <PlaceholderPage title="Security Settings" />,
+        element: <SystemReport />,
       }
     ]
   },
@@ -114,8 +117,8 @@ export const router = createBrowserRouter([
       <div className="flex flex-col items-center justify-center min-h-screen">
         <h1 className="text-4xl font-bold text-gray-600 mb-4">404</h1>
         <p className="text-gray-500 mb-4">Page not found</p>
-        <a href="/login" className="text-blue-600 hover:underline">
-          Go back to login
+        <a href="/" className="text-blue-600 hover:underline">
+          Go back to dashboard
         </a>
       </div>
     ),
