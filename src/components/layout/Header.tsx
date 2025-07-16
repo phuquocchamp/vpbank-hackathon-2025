@@ -49,7 +49,7 @@ const Header = () => {
                 <p className="text-xs leading-none text-muted-foreground">
                   {user?.email}
                 </p>
-                <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs mt-1 w-fit ${user?.role === 'admin'
+                <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs mt-1 w-fit ${user?.role === 'ADMIN'
                   ? 'bg-red-100 text-red-700 dark:bg-red-900/20 dark:text-red-300'
                   : 'bg-blue-100 text-blue-700 dark:bg-blue-900/20 dark:text-blue-300'
                   }`}>
