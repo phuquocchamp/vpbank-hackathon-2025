@@ -1,22 +1,20 @@
+import { useAuth } from '@/contexts/AuthContext';
 import {
+  Activity,
   BarChart3,
   Bell,
   Calendar,
+  Database,
   FileText,
   HelpCircle,
   Home,
   Inbox,
   MessageCircle,
   Search,
-  Settings,
-  Shield,
-  Users,
-  Database,
-  Activity
+  Users
 } from 'lucide-react';
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { useAuth } from '@/contexts/AuthContext';
 
 import {
   Sidebar,
@@ -31,7 +29,7 @@ import {
   SidebarRail,
   SidebarTrigger
 } from '@/components/ui/sidebar';
-import { CLIENT_ROUTES, ADMIN_ROUTES } from '@/config/routes';
+import { ADMIN_ROUTES, CLIENT_ROUTES } from '@/config/routes';
 
 interface MenuItem {
   title: string;
@@ -77,36 +75,36 @@ const menuItems: MenuItem[] = [
     roles: ['ADMIN']
   },
   {
+    title: 'Knowledge Base',
+    url: ADMIN_ROUTES.KNOWLEDGE_BASE,
+    icon: Database,
+    roles: ['ADMIN']
+  },
+  {
     title: 'System Reports',
     url: ADMIN_ROUTES.REPORTS,
     icon: FileText,
     roles: ['ADMIN']
   },
-  {
-    title: 'System Analytics',
-    url: ADMIN_ROUTES.ANALYTICS,
-    icon: Database,
-    roles: ['ADMIN']
-  },
-  {
-    title: 'Security',
-    url: '/admin/security',
-    icon: Shield,
-    roles: ['ADMIN']
-  },
+  // {
+  //   title: 'Security',
+  //   url: '/admin/security',
+  //   icon: Shield,
+  //   roles: ['ADMIN']
+  // },
 
-  // Shared items (both roles can access)
-  {
-    title: 'Settings',
-    url: '/settings',
-    icon: Settings,
-    roles: ['USER', 'ADMIN']
-  },
+  // // Shared items (both roles can access)
+  // {
+  //   title: 'Settings',
+  //   url: '/settings',
+  //   icon: Settings,
+  //   roles: ['USER', 'ADMIN']
+  // },
   {
     title: 'Help & Support',
-    url: '/help',
+    url: ADMIN_ROUTES.HELP,
     icon: HelpCircle,
-    roles: ['USER', 'ADMIN']
+    roles: ['ADMIN']
   }
 ];
 

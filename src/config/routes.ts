@@ -10,8 +10,10 @@ export const ADMIN_ROUTES = {
   ADMIN: '/admin',
   DASHBOARD: '/admin/dashboard',
   USERS: '/admin/users',
+  KNOWLEDGE_BASE: '/admin/knowledge-base',
+  HELP: '/admin/help',
+
   REPORTS: '/admin/reports',
-  ANALYTICS: '/admin/analytics',
   SETTINGS: '/admin/settings',
 } as const;
 
