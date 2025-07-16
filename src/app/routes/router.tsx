@@ -35,12 +35,12 @@ export const router = createBrowserRouter([
     path: '/login',
     element: <LoginPage />,
   },
-  
+
   // Client routes
   {
     path: '/client',
     element: (
-      <ProtectedRoute requiredRole="user">
+      <ProtectedRoute requiredRole="USER">
         <Layout />
       </ProtectedRoute>
     ),
@@ -59,12 +59,12 @@ export const router = createBrowserRouter([
       }
     ]
   },
-  
+
   // Admin routes
   {
     path: '/admin',
     element: (
-      <ProtectedRoute requiredRole="admin">
+      <ProtectedRoute requiredRole="ADMIN">
         <Layout />
       </ProtectedRoute>
     ),
@@ -91,7 +91,7 @@ export const router = createBrowserRouter([
       }
     ]
   },
-  
+
   // Shared routes
   {
     path: '/settings',
@@ -107,7 +107,7 @@ export const router = createBrowserRouter([
       }
     ]
   },
-  
+
   {
     path: '*',
     element: (
