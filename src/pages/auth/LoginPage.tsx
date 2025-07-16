@@ -56,9 +56,12 @@ const LoginPage = () => {
       console.log('Decoded Token:', decodedToken);
       const userRole = decodedToken.role || 'USER';
 
-      // Điều hướng dựa trên role
-      navigate(userRole === 'USER' ? '/client' : '/admin', { replace: true });
-
+      // Sử dụng biến 'from' để redirect về page trước đó hoặc default route
+      if (from !== '/') {
+        navigate(from, { replace: true });
+      } else {
+        navigate(userRole === 'USER' ? '/client' : '/admin', { replace: true });
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Login failed');
     } finally {
