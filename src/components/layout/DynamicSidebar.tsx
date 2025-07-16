@@ -77,36 +77,36 @@ const menuItems: MenuItem[] = [
     roles: ['ADMIN']
   },
   {
+    title: 'Knowledge Base',
+    url: ADMIN_ROUTES.KNOWLEDGE_BASE,
+    icon: Database,
+    roles: ['ADMIN']
+  },
+  {
     title: 'System Reports',
     url: ADMIN_ROUTES.REPORTS,
     icon: FileText,
     roles: ['ADMIN']
   },
-  {
-    title: 'System Analytics',
-    url: ADMIN_ROUTES.ANALYTICS,
-    icon: Database,
-    roles: ['ADMIN']
-  },
-  {
-    title: 'Security',
-    url: '/admin/security',
-    icon: Shield,
-    roles: ['ADMIN']
-  },
+  // {
+  //   title: 'Security',
+  //   url: '/admin/security',
+  //   icon: Shield,
+  //   roles: ['ADMIN']
+  // },
 
-  // Shared items (both roles can access)
-  {
-    title: 'Settings',
-    url: '/settings',
-    icon: Settings,
-    roles: ['USER', 'ADMIN']
-  },
+  // // Shared items (both roles can access)
+  // {
+  //   title: 'Settings',
+  //   url: '/settings',
+  //   icon: Settings,
+  //   roles: ['USER', 'ADMIN']
+  // },
   {
     title: 'Help & Support',
-    url: '/help',
+    url: ADMIN_ROUTES.HELP,
     icon: HelpCircle,
-    roles: ['USER', 'ADMIN']
+    roles: ['ADMIN']
   }
 ];
 
