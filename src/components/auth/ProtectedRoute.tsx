@@ -4,14 +4,14 @@ import { Navigate, useLocation } from 'react-router-dom';
 
 interface ProtectedRouteProps {
   children: ReactNode;
-  requiredRole?: 'user' | 'admin';
+  requiredRole?: 'USER' | 'ADMIN';
   fallbackPath?: string;
 }
 
-const ProtectedRoute = ({ 
-  children, 
+const ProtectedRoute = ({
+  children,
   requiredRole,
-  fallbackPath = '/login' 
+  fallbackPath = '/login'
 }: ProtectedRouteProps) => {
   const { isAuthenticated, user, isLoading } = useAuth();
   const location = useLocation();
@@ -33,7 +33,7 @@ const ProtectedRoute = ({
   // Check role-based access
   if (requiredRole && user?.role !== requiredRole) {
     // Redirect to appropriate dashboard based on user's actual role
-    const redirectPath = user?.role === 'admin' ? '/admin' : '/client';
+    const redirectPath = user?.role === 'ADMIN' ? '/admin' : '/client';
     return <Navigate to={redirectPath} replace />;
   }
 
