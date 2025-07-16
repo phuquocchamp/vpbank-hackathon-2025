@@ -38,7 +38,7 @@ interface MenuItem {
   url: string;
   icon: any;
   badge?: string;
-  roles: ('user' | 'admin')[];
+  roles: ('USER' | 'ADMIN')[];
 }
 
 // Define menu items with role-based access
@@ -48,65 +48,65 @@ const menuItems: MenuItem[] = [
     title: 'Dashboard',
     url: '/client',
     icon: Home,
-    roles: ['user']
+    roles: ['USER']
   },
   {
     title: 'Conversations',
     url: CLIENT_ROUTES.CONVERSATION,
     icon: MessageCircle,
-    roles: ['user']
+    roles: ['USER']
   },
   {
     title: 'Analytics',
     url: CLIENT_ROUTES.ANALYTICS,
     icon: BarChart3,
-    roles: ['user']
+    roles: ['USER']
   },
-  
+
   // Admin items
   {
     title: 'Admin Dashboard',
     url: ADMIN_ROUTES.ADMIN,
     icon: Activity,
-    roles: ['admin']
+    roles: ['ADMIN']
   },
   {
     title: 'User Management',
     url: ADMIN_ROUTES.USERS,
     icon: Users,
-    roles: ['admin']
+    roles: ['ADMIN']
   },
   {
     title: 'System Reports',
     url: ADMIN_ROUTES.REPORTS,
     icon: FileText,
-    roles: ['admin']
+    roles: ['ADMIN']
   },
   {
     title: 'System Analytics',
     url: ADMIN_ROUTES.ANALYTICS,
     icon: Database,
-    roles: ['admin']
+    roles: ['ADMIN']
   },
   {
     title: 'Security',
     url: '/admin/security',
     icon: Shield,
-    roles: ['admin']
+    roles: ['ADMIN']
   },
-  
+
   // Shared items (both roles can access)
   {
     title: 'Settings',
     url: '/settings',
     icon: Settings,
-    roles: ['user', 'admin']
+    roles: ['USER', 'ADMIN']
   },
   {
     title: 'Help & Support',
     url: '/help',
     icon: HelpCircle,
-    roles: ['user', 'admin']
+    roles: ['USER', 'ADMIN']
   }
 ];
 
@@ -115,26 +115,26 @@ const applicationItems: MenuItem[] = [
     title: 'Search',
     url: '/search',
     icon: Search,
-    roles: ['user', 'admin']
+    roles: ['USER', 'ADMIN']
   },
   {
     title: 'Calendar',
     url: '/calendar',
     icon: Calendar,
-    roles: ['user', 'admin']
+    roles: ['USER', 'ADMIN']
   },
   {
     title: 'Inbox',
     url: '/inbox',
     icon: Inbox,
     badge: '12',
-    roles: ['user', 'admin']
+    roles: ['USER', 'ADMIN']
   },
   {
     title: 'Notifications',
     url: '/notifications',
     icon: Bell,
-    roles: ['user', 'admin']
+    roles: ['USER', 'ADMIN']
   }
 ];
 
@@ -143,27 +143,27 @@ export function DynamicSidebar({ ...props }: React.ComponentProps<typeof Sidebar
   const location = useLocation();
 
   const isActive = (url: string) => {
-    if (url === '/client' && user?.role === 'user') {
+    if (url === '/client' && user?.role === 'USER') {
       return location.pathname === '/' || location.pathname === '/client';
     }
-    if (url === '/admin' && user?.role === 'admin') {
+    if (url === '/admin' && user?.role === 'ADMIN') {
       return location.pathname === '/' || location.pathname === '/admin';
     }
     return location.pathname.startsWith(url);
   };
 
   // Filter menu items based on user role
-  const filteredMainItems = menuItems.filter(item => 
-    item.roles.includes(user?.role || 'user')
+  const filteredMainItems = menuItems.filter(item =>
+    item.roles.includes(user?.role || 'USER')
   );
 
-  const filteredAppItems = applicationItems.filter(item => 
-    item.roles.includes(user?.role || 'user')
+  const filteredAppItems = applicationItems.filter(item =>
+    item.roles.includes(user?.role || 'USER')
   );
 
   // Get brand info based on role
   const getBrandInfo = () => {
-    if (user?.role === 'admin') {
+    if (user?.role === 'ADMIN') {
       return {
         title: 'VPBank Admin',
         subtitle: 'Admin Console',
@@ -185,7 +185,7 @@ export function DynamicSidebar({ ...props }: React.ComponentProps<typeof Sidebar
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton size="lg" asChild>
-              <Link to={user?.role === 'admin' ? '/admin' : '/client'}>
+              <Link to={user?.role === 'ADMIN' ? '/admin' : '/client'}>
                 <SidebarTrigger>
                   <div className={`flex aspect-square size-8 items-center justify-center rounded-lg ${brandInfo.color} text-white`}>
                     <BarChart3 className="size-4" />
@@ -209,8 +209,8 @@ export function DynamicSidebar({ ...props }: React.ComponentProps<typeof Sidebar
             <SidebarMenu>
               {filteredMainItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton 
-                    asChild 
+                  <SidebarMenuButton
+                    asChild
                     isActive={isActive(item.url)}
                     tooltip={item.title}
                   >
@@ -238,8 +238,8 @@ export function DynamicSidebar({ ...props }: React.ComponentProps<typeof Sidebar
               <SidebarMenu>
                 {filteredAppItems.map((item) => (
                   <SidebarMenuItem key={item.title}>
-                    <SidebarMenuButton 
-                      asChild 
+                    <SidebarMenuButton
+                      asChild
                       isActive={isActive(item.url)}
                       tooltip={item.title}
                     >

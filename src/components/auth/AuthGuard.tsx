@@ -17,7 +17,7 @@ export const AuthGuard = () => {
   }
 
   // Redirect to appropriate dashboard based on role
-  const redirectPath = user?.role === 'admin' ? '/admin' : '/client';
+  const redirectPath = user?.role === 'ADMIN' ? '/admin' : '/client';
   return <Navigate to={redirectPath} replace />;
 };
 
