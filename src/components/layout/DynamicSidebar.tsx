@@ -1,22 +1,20 @@
+import { useAuth } from '@/contexts/AuthContext';
 import {
+  Activity,
   BarChart3,
   Bell,
   Calendar,
+  Database,
   FileText,
   HelpCircle,
   Home,
   Inbox,
   MessageCircle,
   Search,
-  Settings,
-  Shield,
-  Users,
-  Database,
-  Activity
+  Users
 } from 'lucide-react';
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { useAuth } from '@/contexts/AuthContext';
 
 import {
   Sidebar,
@@ -31,7 +29,7 @@ import {
   SidebarRail,
   SidebarTrigger
 } from '@/components/ui/sidebar';
-import { CLIENT_ROUTES, ADMIN_ROUTES } from '@/config/routes';
+import { ADMIN_ROUTES, CLIENT_ROUTES } from '@/config/routes';
 
 interface MenuItem {
   title: string;

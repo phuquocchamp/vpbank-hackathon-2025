@@ -61,7 +61,8 @@ const KnowledgeBase = () => {
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0]
     if (file) {
-      setSelectedFile(file)
+      setSelectedFile(file);
+      console.log('File selected:', selectedFile?.name)
       const newItem: KnowledgeBaseItem = {
         id: Date.now().toString(),
         title: file.name,
