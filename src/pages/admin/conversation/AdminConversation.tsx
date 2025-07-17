@@ -55,13 +55,15 @@ const AdminConversation = () => {
 
   // Helper function to highlight text within backticks
   const highlightBackticks = (text: string) => {
+    if (!text) return text; // Handle undefined or null text
     const parts = text.split(/(`[^`]*`)/g);
+    if (parts.length === 1) return text; // No backticks found, return original text
     return parts.map((part, index) => {
       if (part.startsWith('`') && part.endsWith('`')) {
         const content = part.slice(1, -1); // Remove backticks
         return (
-          <span 
-            key={index} 
+          <span
+            key={index}
             className="bg-gray-200 dark:bg-gray-700 px-1 py-0.5 rounded text-xs font-mono"
           >
             {content}
@@ -71,6 +73,8 @@ const AdminConversation = () => {
       return part;
     });
   };
+
+  console.log('Current conversation:', state.currentConversation?.messages);
 
   // Helper function to render message content
   const renderMessageContent = (content: string | { sql?: string; database?: string; message: string }) => {
@@ -197,6 +201,7 @@ const AdminConversation = () => {
                     </span>
                   </div>
                   <div className="text-justify">
+
                     {renderMessageContent(message.content)}
                   </div>
                   <p className="text-xs opacity-75 mt-1">

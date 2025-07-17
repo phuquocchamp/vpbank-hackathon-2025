@@ -224,7 +224,7 @@ export function DynamicSidebar({ ...props }: React.ComponentProps<typeof Sidebar
         {/* Admin Chat Section */}
         {user?.role === 'ADMIN' && (
           <SidebarGroup>
-            <SidebarGroupLabel>Chat</SidebarGroupLabel>
+            <SidebarGroupLabel className="py-2">Chat</SidebarGroupLabel>
             <SidebarGroupContent>
               <SidebarMenu>
                 <SidebarMenuItem>
@@ -232,10 +232,10 @@ export function DynamicSidebar({ ...props }: React.ComponentProps<typeof Sidebar
                     onClick={handleNewChat}
                     variant="outline"
                     size="sm"
-                    className="w-full justify-start"
+                    className="w-full justify-start py-3 px-3 h-auto"
                     disabled={state.loading}
                   >
-                    <Plus className="size-4 mr-2" />
+                    <Plus className="size-4 mr-3" />
                     New Chat
                   </Button>
                 </SidebarMenuItem>
@@ -246,19 +246,20 @@ export function DynamicSidebar({ ...props }: React.ComponentProps<typeof Sidebar
 
         {/* Main Navigation */}
         <SidebarGroup>
-          <SidebarGroupLabel>Main</SidebarGroupLabel>
+          <SidebarGroupLabel className="py-2">Main</SidebarGroupLabel>
           <SidebarGroupContent>
-            <SidebarMenu>
+            <SidebarMenu className="space-y-1">
               {filteredMainItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton
                     asChild
                     isActive={isActive(item.url)}
                     tooltip={item.title}
+                    className="py-3 px-3 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-md transition-colors"
                   >
                     <Link to={item.url}>
-                      <item.icon />
-                      <span>{item.title}</span>
+                      <item.icon className="size-4" />
+                      <span className="ml-3">{item.title}</span>
                       {item.badge && (
                         <span className="ml-auto text-xs bg-red-500 text-white px-1.5 py-0.5 rounded-full">
                           {item.badge}
@@ -279,7 +280,7 @@ export function DynamicSidebar({ ...props }: React.ComponentProps<typeof Sidebar
               <Collapsible defaultOpen className="group/collapsible">
                 <SidebarMenuItem>
                   <CollapsibleTrigger asChild>
-                    <SidebarMenuButton>
+                    <SidebarMenuButton className="py-3">
                       <History className="size-4" />
                       Recent Conversations
                       {state.loading && (
@@ -290,18 +291,18 @@ export function DynamicSidebar({ ...props }: React.ComponentProps<typeof Sidebar
                     </SidebarMenuButton>
                   </CollapsibleTrigger>
                   <CollapsibleContent>
-                    <SidebarMenuSub>
+                    <SidebarMenuSub className="space-y-2">
                       {state.conversations && state.conversations.length > 0 ? (
                         state.conversations.slice(0, 10).map((conversation) => (
-                          <SidebarMenuSubItem key={conversation.conversationId}>
+                          <SidebarMenuSubItem key={conversation.conversationId} className="mx-1">
                             <SidebarMenuSubButton
                               onClick={() => handleConversationClick(conversation)}
                               isActive={location.pathname === `/admin/conversations/${conversation.conversationId}`}
-                              className="group cursor-pointer"
+                              className="group cursor-pointer py-3 px-3 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-md transition-colors"
                             >
-                              <MessageCircle className="size-4" />
-                              <div className="flex-1 min-w-0">
-                                <div className="truncate text-sm font-medium">
+                              <MessageCircle className="size-4 flex-shrink-0" />
+                              <div className="flex-1 min-w-0 ml-3">
+                                <div className="truncate text-xs font-medium leading-3">
                                   {conversation.title}
                                 </div>
                                 <div className="text-xs text-muted-foreground">
@@ -313,10 +314,10 @@ export function DynamicSidebar({ ...props }: React.ComponentProps<typeof Sidebar
                                   <Button
                                     variant="ghost"
                                     size="sm"
-                                    className="h-6 w-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
+                                    className="h-8 w-8 p-0 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0"
                                     onClick={(e) => e.stopPropagation()}
                                   >
-                                    <MoreHorizontal className="size-3" />
+                                    <MoreHorizontal className="size-4" />
                                   </Button>
                                 </DropdownMenuTrigger>
                                 <DropdownMenuContent align="start">
