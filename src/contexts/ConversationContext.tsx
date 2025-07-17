@@ -1,5 +1,6 @@
 import { createContext, useCallback, useContext, useReducer } from 'react';
 import { v4 as uuidv4 } from 'uuid';
+import { useNavigate } from 'react-router-dom';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 interface Message {
@@ -123,16 +124,12 @@ export const ConversationProvider: React.FC<{ children: React.ReactNode }> = ({ 
   const createNewConversation = useCallback(async (): Promise<Conversation> => {
     dispatch({ type: 'SET_LOADING', payload: true });
     try {
-      const newConversation: Conversation = {
+      const newConversation = {
         conversationId: uuidv4(),
         title: 'New Chat',
-        messages: [],
-        createdAt: new Date(),
-        updatedAt: new Date(),
-        userId: 'admin', // Get from auth context
+        userId: 'admin',
       };
 
-      // API call to create conversation
       const response = await fetch(`${API_BASE_URL}/admin/conversations`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -143,6 +140,7 @@ export const ConversationProvider: React.FC<{ children: React.ReactNode }> = ({ 
 
       const createdConversation = await response.json();
       dispatch({ type: 'CREATE_CONVERSATION', payload: createdConversation });
+
       return createdConversation;
     } catch (error) {
       dispatch({ type: 'SET_ERROR', payload: error instanceof Error ? error.message : 'Unknown error' });
@@ -320,4 +318,27 @@ export const useConversation = () => {
     throw new Error('useConversation must be used within a ConversationProvider');
   }
   return context;
+};
+
+// Add new hook for handling navigation
+export const useConversationWithNavigation = () => {
+  const conversation = useConversation();
+  const navigate = useNavigate();
+
+  const createNewConversationAndNavigate = useCallback(async () => {
+    try {
+      const newConversation = await conversation.createNewConversation();
+      // Navigate using the ID from API response
+      navigate(`/admin/conversations/${newConversation.conversationId}`);
+      return newConversation;
+    } catch (error) {
+      console.error('Failed to create and navigate to new conversation:', error);
+      throw error;
+    }
+  }, [conversation.createNewConversation, navigate]);
+
+  return {
+    ...conversation,
+    createNewConversationAndNavigate,
+  };
 };
