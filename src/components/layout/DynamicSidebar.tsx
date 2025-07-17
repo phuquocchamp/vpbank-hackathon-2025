@@ -1,21 +1,36 @@
 import { useAuth } from '@/contexts/AuthContext';
+import { useConversation } from '@/contexts/ConversationContext';
 import {
   Activity,
   BarChart3,
-  Bell,
-  Calendar,
   Database,
+  Edit,
   FileText,
   HelpCircle,
+  History,
   Home,
-  Inbox,
   MessageCircle,
-  Search,
+  Minus,
+  MoreHorizontal,
+  Plus,
+  Trash2,
   Users
 } from 'lucide-react';
-import React from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { useEffect } from 'react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 
+import { Button } from '@/components/ui/button';
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from '@/components/ui/collapsible';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import {
   Sidebar,
   SidebarContent,
@@ -26,6 +41,9 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
+  SidebarMenuSub,
+  SidebarMenuSubButton,
+  SidebarMenuSubItem,
   SidebarRail,
   SidebarTrigger
 } from '@/components/ui/sidebar';
@@ -86,20 +104,6 @@ const menuItems: MenuItem[] = [
     icon: FileText,
     roles: ['ADMIN']
   },
-  // {
-  //   title: 'Security',
-  //   url: '/admin/security',
-  //   icon: Shield,
-  //   roles: ['ADMIN']
-  // },
-
-  // // Shared items (both roles can access)
-  // {
-  //   title: 'Settings',
-  //   url: '/settings',
-  //   icon: Settings,
-  //   roles: ['USER', 'ADMIN']
-  // },
   {
     title: 'Help & Support',
     url: ADMIN_ROUTES.HELP,
@@ -108,37 +112,17 @@ const menuItems: MenuItem[] = [
   }
 ];
 
-const applicationItems: MenuItem[] = [
-  {
-    title: 'Search',
-    url: '/search',
-    icon: Search,
-    roles: ['USER', 'ADMIN']
-  },
-  {
-    title: 'Calendar',
-    url: '/calendar',
-    icon: Calendar,
-    roles: ['USER', 'ADMIN']
-  },
-  {
-    title: 'Inbox',
-    url: '/inbox',
-    icon: Inbox,
-    badge: '12',
-    roles: ['USER', 'ADMIN']
-  },
-  {
-    title: 'Notifications',
-    url: '/notifications',
-    icon: Bell,
-    roles: ['USER', 'ADMIN']
-  }
-];
-
 export function DynamicSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const { user } = useAuth();
+  const { state, createNewConversation, loadConversations, deleteConversation, setCurrentConversation } = useConversation();
   const location = useLocation();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (user?.role === 'ADMIN') {
+      loadConversations();
+    }
+  }, [user, loadConversations]);
 
   const isActive = (url: string) => {
     if (url === '/client' && user?.role === 'USER') {
@@ -150,12 +134,50 @@ export function DynamicSidebar({ ...props }: React.ComponentProps<typeof Sidebar
     return location.pathname.startsWith(url);
   };
 
+  const handleNewChat = async () => {
+    try {
+      const newConversation = await createNewConversation();
+      navigate(`/admin/conversations/${newConversation.conversationId}`);
+    } catch (error) {
+      console.error('Failed to create new chat:', error);
+    }
+  };
+
+  const handleDeleteConversation = async (conversationId: string, event: React.MouseEvent) => {
+    event.preventDefault();
+    event.stopPropagation();
+
+    try {
+      await deleteConversation(conversationId);
+      if (location.pathname === `/admin/conversations/${conversationId}`) {
+        navigate('/admin');
+      }
+    } catch (error) {
+      console.error('Failed to delete conversation:', error);
+    }
+  };
+
+  const handleChangeConversationTitle = async (conversationId: string, event: React.MouseEvent) => {
+    //   event.preventDefault();
+    //   event.stopPropagation();
+
+    //   // You can implement this function based on your conversation context
+    //   // For now, it's just a placeholder
+    //   const newTitle = prompt('Enter new title:');
+    //   if (newTitle) {
+    //     // Implement the logic to update conversation title
+    //     // This might require adding an updateConversationTitle function to your conversation context
+    //     console.log('Updating conversation title:', conversationId, newTitle);
+    //   }
+  };
+
+  const handleConversationClick = (conversation: any) => {
+    setCurrentConversation(conversation);
+    navigate(`/admin/conversations/${conversation.conversationId}`);
+  };
+
   // Filter menu items based on user role
   const filteredMainItems = menuItems.filter(item =>
-    item.roles.includes(user?.role || 'USER')
-  );
-
-  const filteredAppItems = applicationItems.filter(item =>
     item.roles.includes(user?.role || 'USER')
   );
 
@@ -165,7 +187,7 @@ export function DynamicSidebar({ ...props }: React.ComponentProps<typeof Sidebar
       return {
         title: 'VPBank Admin',
         subtitle: 'Admin Console',
-        color: 'bg-red-600'
+        color: 'bg-blue-700'
       };
     }
     return {
@@ -176,7 +198,6 @@ export function DynamicSidebar({ ...props }: React.ComponentProps<typeof Sidebar
   };
 
   const brandInfo = getBrandInfo();
-
   return (
     <Sidebar collapsible="icon" {...props}>
       <SidebarHeader>
@@ -200,21 +221,45 @@ export function DynamicSidebar({ ...props }: React.ComponentProps<typeof Sidebar
       </SidebarHeader>
 
       <SidebarContent>
+        {/* Admin Chat Section */}
+        {user?.role === 'ADMIN' && (
+          <SidebarGroup>
+            <SidebarGroupLabel className="py-2">Chat</SidebarGroupLabel>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                <SidebarMenuItem>
+                  <Button
+                    onClick={handleNewChat}
+                    variant="outline"
+                    size="sm"
+                    className="w-full justify-start py-3 px-3 h-auto"
+                    disabled={state.loading}
+                  >
+                    <Plus className="size-4 mr-3" />
+                    New Chat
+                  </Button>
+                </SidebarMenuItem>
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        )}
+
         {/* Main Navigation */}
         <SidebarGroup>
-          <SidebarGroupLabel>Main</SidebarGroupLabel>
+          <SidebarGroupLabel className="py-2">Main</SidebarGroupLabel>
           <SidebarGroupContent>
-            <SidebarMenu>
+            <SidebarMenu className="space-y-1">
               {filteredMainItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton
                     asChild
                     isActive={isActive(item.url)}
                     tooltip={item.title}
+                    className="py-3 px-3 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-md transition-colors"
                   >
                     <Link to={item.url}>
-                      <item.icon />
-                      <span>{item.title}</span>
+                      <item.icon className="size-4" />
+                      <span className="ml-3">{item.title}</span>
                       {item.badge && (
                         <span className="ml-auto text-xs bg-red-500 text-white px-1.5 py-0.5 rounded-full">
                           {item.badge}
@@ -228,35 +273,88 @@ export function DynamicSidebar({ ...props }: React.ComponentProps<typeof Sidebar
           </SidebarGroupContent>
         </SidebarGroup>
 
-        {/* Application Items */}
-        {filteredAppItems.length > 0 && (
+        {/* Conversation History for Admin */}
+        {user?.role === 'ADMIN' && (
           <SidebarGroup>
-            <SidebarGroupLabel>Application</SidebarGroupLabel>
-            <SidebarGroupContent>
-              <SidebarMenu>
-                {filteredAppItems.map((item) => (
-                  <SidebarMenuItem key={item.title}>
-                    <SidebarMenuButton
-                      asChild
-                      isActive={isActive(item.url)}
-                      tooltip={item.title}
-                    >
-                      <Link to={item.url}>
-                        <item.icon />
-                        <span>{item.title}</span>
-                        {item.badge && (
-                          <span className="ml-auto text-xs bg-red-500 text-white px-1.5 py-0.5 rounded-full">
-                            {item.badge}
-                          </span>
-                        )}
-                      </Link>
+            <SidebarMenu>
+              <Collapsible defaultOpen className="group/collapsible">
+                <SidebarMenuItem>
+                  <CollapsibleTrigger asChild>
+                    <SidebarMenuButton className="py-3">
+                      <History className="size-4" />
+                      Recent Conversations
+                      {state.loading && (
+                        <div className="ml-auto animate-spin rounded-full h-4 w-4 border-b-2 border-current" />
+                      )}
+                      <Plus className="ml-auto group-data-[state=open]/collapsible:hidden" />
+                      <Minus className="ml-auto group-data-[state=closed]/collapsible:hidden" />
                     </SidebarMenuButton>
-                  </SidebarMenuItem>
-                ))}
-              </SidebarMenu>
-            </SidebarGroupContent>
+                  </CollapsibleTrigger>
+                  <CollapsibleContent>
+                    <SidebarMenuSub className="space-y-2">
+                      {state.conversations && state.conversations.length > 0 ? (
+                        state.conversations.slice(0, 10).map((conversation) => (
+                          <SidebarMenuSubItem key={conversation.conversationId} className="mx-1">
+                            <SidebarMenuSubButton
+                              onClick={() => handleConversationClick(conversation)}
+                              isActive={location.pathname === `/admin/conversations/${conversation.conversationId}`}
+                              className="group cursor-pointer py-3 px-3 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-md transition-colors"
+                            >
+                              <MessageCircle className="size-4 flex-shrink-0" />
+                              <div className="flex-1 min-w-0 ml-3">
+                                <div className="truncate text-xs font-medium leading-3">
+                                  {conversation.title}
+                                </div>
+                                <div className="text-xs text-muted-foreground">
+                                  {conversation.messages.length} messages
+                                </div>
+                              </div>
+                              <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    className="h-8 w-8 p-0 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0"
+                                    onClick={(e) => e.stopPropagation()}
+                                  >
+                                    <MoreHorizontal className="size-4" />
+                                  </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="start">
+                                  <DropdownMenuItem
+                                    onClick={(e: React.MouseEvent) => handleChangeConversationTitle(conversation.conversationId, e)}
+                                    className="text-blue-600"
+                                  >
+                                    <Edit className="size-4 mr-2" />
+                                    Change Title
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem
+                                    onClick={(e: React.MouseEvent) => handleDeleteConversation(conversation.conversationId, e)}
+                                    className="text-red-600"
+                                  >
+                                    <Trash2 className="size-4 mr-2" />
+                                    Delete
+                                  </DropdownMenuItem>
+                                </DropdownMenuContent>
+                              </DropdownMenu>
+                            </SidebarMenuSubButton>
+                          </SidebarMenuSubItem>
+                        ))
+                      ) : (
+                        <SidebarMenuSubItem>
+                          <div className="px-4 py-2 text-sm text-muted-foreground">
+                            {state.loading ? 'Loading conversations...' : 'No conversations yet'}
+                          </div>
+                        </SidebarMenuSubItem>
+                      )}
+                    </SidebarMenuSub>
+                  </CollapsibleContent>
+                </SidebarMenuItem>
+              </Collapsible>
+            </SidebarMenu>
           </SidebarGroup>
         )}
+
       </SidebarContent>
 
       <SidebarRail />
