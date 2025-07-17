@@ -4,7 +4,11 @@ import { v4 as uuidv4 } from 'uuid';
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 interface Message {
   id: string;
-  content: string;
+  content: string | {
+    sql?: string;
+    database?: string;
+    message: string;
+  };
   role: 'user' | 'assistant';
   timestamp: Date;
 }
@@ -221,7 +225,7 @@ export const ConversationProvider: React.FC<{ children: React.ReactNode }> = ({ 
       if (data.assistant) {
         const assistantMessage: Message = {
           id: data.assistant.id,
-          content: data.assistant.content,
+          content: data.assistant.content, // This can be string or object
           role: data.assistant.role,
           timestamp: new Date(data.assistant.timestamp),
         };

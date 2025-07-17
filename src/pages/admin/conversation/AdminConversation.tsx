@@ -53,6 +53,69 @@ const AdminConversation = () => {
     }
   };
 
+  // Helper function to highlight text within backticks
+  const highlightBackticks = (text: string) => {
+    const parts = text.split(/(`[^`]*`)/g);
+    return parts.map((part, index) => {
+      if (part.startsWith('`') && part.endsWith('`')) {
+        const content = part.slice(1, -1); // Remove backticks
+        return (
+          <span 
+            key={index} 
+            className="bg-gray-200 dark:bg-gray-700 px-1 py-0.5 rounded text-xs font-mono"
+          >
+            {content}
+          </span>
+        );
+      }
+      return part;
+    });
+  };
+
+  // Helper function to render message content
+  const renderMessageContent = (content: string | { sql?: string; database?: string; message: string }) => {
+    if (typeof content === 'string') {
+      return (
+        <div className="text-sm whitespace-pre-wrap break-words text-justify">
+          {highlightBackticks(content)}
+        </div>
+      );
+    }
+
+    // Handle object content (assistant messages)
+    return (
+      <div className="text-sm space-y-3">
+        {/* Message part - always show */}
+        <div className="whitespace-pre-wrap break-words text-justify">
+          {highlightBackticks(content.message)}
+        </div>
+
+        {/* SQL and Database parts - only show if they exist and are not empty */}
+        {(content.sql || content.database) && (
+          <div className="space-y-2">
+            {content.database && content.database.trim() !== '' && (
+              <div className="bg-blue-50 dark:bg-blue-900/20 px-3 py-2 rounded-md">
+                <div className="text-xs font-medium text-blue-700 dark:text-blue-300 mb-1">Database:</div>
+                <div className="text-sm font-mono text-blue-800 dark:text-blue-200">
+                  {content.database}
+                </div>
+              </div>
+            )}
+
+            {content.sql && content.sql.trim() !== '' && (
+              <div className="bg-gray-50 dark:bg-gray-800 px-3 py-2 rounded-md">
+                <div className="text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">SQL Query:</div>
+                <div className="text-sm font-mono text-gray-800 dark:text-gray-200 overflow-x-auto text-left">
+                  {content.sql};
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+    );
+  };
+
   if (!conversationId) {
     return (
       <div className="flex items-center justify-center h-full">
@@ -118,9 +181,9 @@ const AdminConversation = () => {
                 className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
               >
                 <div
-                  className={`max-w-[70%] ${message.role === 'user'
+                  className={`max-w-[80%] ${message.role === 'user'
                     ? 'bg-blue-600 text-white'
-                    : 'bg-gray-100 text-gray-900'
+                    : 'bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-gray-100'
                     } rounded-lg px-4 py-2 shadow-sm`}
                 >
                   <div className="flex items-center gap-2 mb-1">
@@ -133,8 +196,8 @@ const AdminConversation = () => {
                       {message.role === 'user' ? 'Admin' : 'AI Assistant'}
                     </span>
                   </div>
-                  <div className="text-sm whitespace-pre-wrap break-words">
-                    {message.content}
+                  <div className="text-justify">
+                    {renderMessageContent(message.content)}
                   </div>
                   <p className="text-xs opacity-75 mt-1">
                     {message.timestamp instanceof Date
@@ -158,10 +221,10 @@ const AdminConversation = () => {
 
         {isTyping && (
           <div className="flex justify-start">
-            <div className="bg-gray-100 rounded-lg px-4 py-2 shadow-sm">
+            <div className="bg-gray-100 dark:bg-gray-800 rounded-lg px-4 py-2 shadow-sm">
               <div className="flex items-center gap-2">
                 <Bot className="size-4" />
-                <span className="text-xs text-gray-500">AI Assistant is typing...</span>
+                <span className="text-xs text-gray-500 dark:text-gray-400">AI Assistant is typing...</span>
                 <div className="flex space-x-1 ml-2">
                   <div className="w-1 h-1 bg-gray-500 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
                   <div className="w-1 h-1 bg-gray-500 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
