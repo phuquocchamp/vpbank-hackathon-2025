@@ -1,12 +1,21 @@
+import ComingSoon from '@/components/common/ComingSoon';
+
 const AdminHelp = () => {
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight">Admin Help & Support</h1>
-        <p className="text-gray-600 mt-2">Welcome to the VPBank Admin Help & Support Center</p>
-      </div>
-    </div>
-  )
-}
+    <ComingSoon
+      title="Help & Support Center"
+      subtitle="Comprehensive admin assistance on the way"
+      description="We're building a comprehensive help center with documentation, tutorials, and 24/7 support to help you maximize your admin experience."
+      features={[
+        "Interactive tutorials and guides",
+        "Real-time chat support",
+        "Video documentation library",
+        "Community forums and discussions",
+        "Advanced troubleshooting tools"
+      ]}
+      expectedDate="Q2 2025"
+    />
+  );
+};
 
-export default AdminHelp
+export default AdminHelp;
