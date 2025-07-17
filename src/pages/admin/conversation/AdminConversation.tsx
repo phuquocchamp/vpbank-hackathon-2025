@@ -1,8 +1,10 @@
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useConversation } from '@/contexts/ConversationContext';
-import { Bot, Send, User, AlertCircle } from 'lucide-react';
+import { Bot, Send, User, AlertCircle, Play, Download } from 'lucide-react';
 import { useEffect, useState, useRef } from 'react';
 import { useParams } from 'react-router-dom';
 
@@ -11,8 +13,12 @@ const AdminConversation = () => {
   const { state, loadConversation, sendMessage } = useConversation();
   const [messageInput, setMessageInput] = useState('');
   const [isTyping, setIsTyping] = useState(false);
+  const [queryResults, setQueryResults] = useState<{ [key: string]: any }>({});
+  const [executingQueries, setExecutingQueries] = useState<{ [key: string]: boolean }>({});
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
+
+  const BASE_URL = import.meta.env.VITE_API_BASE_URL;
   // Auto scroll to bottom when new messages arrive
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -53,6 +59,53 @@ const AdminConversation = () => {
     }
   };
 
+  const handleExecuteQuery = async (query: string, database: string, messageId: string) => {
+    const queryKey = `${messageId}_${query}`;
+    setExecutingQueries(prev => ({ ...prev, [queryKey]: true }));
+
+    try {
+      const hostname = window.location.hostname;
+      const response = await fetch(`${BASE_URL}/chatbot/execute_sql`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          query: query,
+          database: database
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const result = await response.json();
+
+      setQueryResults(prev => ({
+        ...prev,
+        [queryKey]: result.body
+      }));
+    } catch (error) {
+      console.error('Failed to execute query:', error);
+      setQueryResults(prev => ({
+        ...prev,
+        [queryKey]: { error: 'Failed to execute query' }
+      }));
+    } finally {
+      setExecutingQueries(prev => ({ ...prev, [queryKey]: false }));
+    }
+  };
+
+  const downloadResults = (presignedUrl: string, filename = 'query_results.xlsx') => {
+    const link = document.createElement('a');
+    link.href = presignedUrl;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   // Helper function to highlight text within backticks
   const highlightBackticks = (text: string) => {
     if (!text) return text; // Handle undefined or null text
@@ -74,10 +127,8 @@ const AdminConversation = () => {
     });
   };
 
-  console.log('Current conversation:', state.currentConversation?.messages);
-
   // Helper function to render message content
-  const renderMessageContent = (content: string | { sql?: string; database?: string; message: string }) => {
+  const renderMessageContent = (content: string | { sql?: string; database?: string; message: string }, messageId: string) => {
     if (typeof content === 'string') {
       return (
         <div className="text-sm whitespace-pre-wrap break-words text-justify">
@@ -108,10 +159,109 @@ const AdminConversation = () => {
 
             {content.sql && content.sql.trim() !== '' && (
               <div className="bg-gray-50 dark:bg-gray-800 px-3 py-2 rounded-md">
-                <div className="text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">SQL Query:</div>
+                <div className="flex items-center justify-between mb-1">
+                  <div className="text-xs font-medium text-gray-700 dark:text-gray-300">SQL Query:</div>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => handleExecuteQuery(content.sql!, content.database || '', messageId)}
+                    disabled={executingQueries[`${messageId}_${content.sql}`]}
+                    className="h-6 px-2 text-xs"
+                  >
+                    {executingQueries[`${messageId}_${content.sql}`] ? (
+                      <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-current mr-1"></div>
+                    ) : (
+                      <Play className="size-3 mr-1" />
+                    )}
+                    Execute
+                  </Button>
+                </div>
                 <div className="text-sm font-mono text-gray-800 dark:text-gray-200 overflow-x-auto text-left">
                   {content.sql};
                 </div>
+              </div>
+            )}
+
+            {/* Query Results */}
+            {content.sql && queryResults[`${messageId}_${content.sql}`] && (
+              <div className="mt-3">
+                {queryResults[`${messageId}_${content.sql}`].error ? (
+                  <Card className="border-red-200 dark:border-red-800">
+                    <CardHeader className="pb-3">
+                      <CardTitle className="text-sm text-red-600 dark:text-red-400 flex items-center">
+                        <AlertCircle className="size-4 mr-1" />
+                        Query Error
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="pt-0">
+                      <p className="text-sm text-red-700 dark:text-red-300">
+                        {queryResults[`${messageId}_${content.sql}`].error}
+                      </p>
+                    </CardContent>
+                  </Card>
+                ) : (
+                  <Card>
+                    <CardHeader className="pb-3">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <CardTitle className="text-sm">Query Results</CardTitle>
+                          <CardDescription className="text-xs">
+                            {queryResults[`${messageId}_${content.sql}`].results?.length || 0} rows returned
+                          </CardDescription>
+                        </div>
+                        {queryResults[`${messageId}_${content.sql}`].presigned_url && (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => downloadResults(queryResults[`${messageId}_${content.sql}`].presigned_url)}
+                            className="h-6 px-2 text-xs"
+                          >
+                            <Download className="size-3 mr-1" />
+                            Download Excel
+                          </Button>
+                        )}
+                      </div>
+                    </CardHeader>
+                    <CardContent className="pt-0">
+                      {queryResults[`${messageId}_${content.sql}`].results &&
+                        queryResults[`${messageId}_${content.sql}`].results.length > 0 ? (
+                        <div className="max-h-60 overflow-auto">
+                          <Table>
+                            <TableHeader>
+                              <TableRow>
+                                {Object.keys(queryResults[`${messageId}_${content.sql}`].results[0]).map((column) => (
+                                  <TableHead key={column} className="text-xs font-medium">
+                                    {column}
+                                  </TableHead>
+                                ))}
+                              </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                              {queryResults[`${messageId}_${content.sql}`].results.slice(0, 10).map((row: any, index: number) => (
+                                <TableRow key={index}>
+                                  {Object.values(row).map((value: any, cellIndex: number) => (
+                                    <TableCell key={cellIndex} className="text-xs">
+                                      {String(value)}
+                                    </TableCell>
+                                  ))}
+                                </TableRow>
+                              ))}
+                            </TableBody>
+                          </Table>
+                          {queryResults[`${messageId}_${content.sql}`].results.length > 10 && (
+                            <div className="text-xs text-gray-500 dark:text-gray-400 mt-2 text-center">
+                              Showing first 10 rows of {queryResults[`${messageId}_${content.sql}`].results.length} total rows
+                            </div>
+                          )}
+                        </div>
+                      ) : (
+                        <div className="text-xs text-gray-500 dark:text-gray-400 text-center py-4">
+                          No results returned
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
+                )}
               </div>
             )}
           </div>
@@ -201,8 +351,7 @@ const AdminConversation = () => {
                     </span>
                   </div>
                   <div className="text-justify">
-
-                    {renderMessageContent(message.content)}
+                    {renderMessageContent(message.content, message.id)}
                   </div>
                   <p className="text-xs opacity-75 mt-1">
                     {message.timestamp instanceof Date
