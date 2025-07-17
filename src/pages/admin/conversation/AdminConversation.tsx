@@ -64,7 +64,7 @@ const AdminConversation = () => {
     setExecutingQueries(prev => ({ ...prev, [queryKey]: true }));
 
     try {
-      const hostname = window.location.hostname;
+      // const hostname = window.location.hostname;
       const response = await fetch(`${BASE_URL}/chatbot/execute_sql`, {
         method: 'POST',
         headers: {

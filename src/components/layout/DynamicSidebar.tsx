@@ -157,19 +157,19 @@ export function DynamicSidebar({ ...props }: React.ComponentProps<typeof Sidebar
     }
   };
 
-  const handleChangeConversationTitle = async (conversationId: string, event: React.MouseEvent) => {
-    //   event.preventDefault();
-    //   event.stopPropagation();
+  // const handleChangeConversationTitle = async (conversationId: string, event: React.MouseEvent) => {
+  //   //   event.preventDefault();
+  //   //   event.stopPropagation();
 
-    //   // You can implement this function based on your conversation context
-    //   // For now, it's just a placeholder
-    //   const newTitle = prompt('Enter new title:');
-    //   if (newTitle) {
-    //     // Implement the logic to update conversation title
-    //     // This might require adding an updateConversationTitle function to your conversation context
-    //     console.log('Updating conversation title:', conversationId, newTitle);
-    //   }
-  };
+  //   //   // You can implement this function based on your conversation context
+  //   //   // For now, it's just a placeholder
+  //   //   const newTitle = prompt('Enter new title:');
+  //   //   if (newTitle) {
+  //   //     // Implement the logic to update conversation title
+  //   //     // This might require adding an updateConversationTitle function to your conversation context
+  //   //     console.log('Updating conversation title:', conversationId, newTitle);
+  //   //   }
+  // };
 
   const handleConversationClick = (conversation: any) => {
     setCurrentConversation(conversation);
@@ -322,7 +322,7 @@ export function DynamicSidebar({ ...props }: React.ComponentProps<typeof Sidebar
                                 </DropdownMenuTrigger>
                                 <DropdownMenuContent align="start">
                                   <DropdownMenuItem
-                                    onClick={(e: React.MouseEvent) => handleChangeConversationTitle(conversation.conversationId, e)}
+                                    // onClick={(e: React.MouseEvent) => handleChangeConversationTitle(conversation.conversationId, e)}
                                     className="text-blue-600"
                                   >
                                     <Edit className="size-4 mr-2" />
