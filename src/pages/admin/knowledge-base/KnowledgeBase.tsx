@@ -123,7 +123,7 @@ const KnowledgeBase = () => {
           {/* Text Knowledge Section */}
           <Card>
             <CardHeader>
-              <CardTitle>Add Business Rule / Knowledge</CardTitle>
+              <CardTitle>Add Business Rule / Knowledge Base</CardTitle>
               <CardDescription>
                 Enter business rules, policies, or knowledge that the system should understand
               </CardDescription>
@@ -139,38 +139,23 @@ const KnowledgeBase = () => {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="knowledge-content">Content</Label>
+                <Label htmlFor="knowledge-content">Description</Label>
                 <Textarea
                   id="knowledge-content"
-                  placeholder="Enter your business rules or knowledge content here..."
+                  placeholder="Enter your business rules or knowledge description here..."
                   value={newKnowledgeText}
                   onChange={(e) => setNewKnowledgeText(e.target.value)}
                   rows={6}
                 />
               </div>
-              <Button onClick={handleAddTextKnowledge} className="w-full">
-                <FileText className="mr-2 h-4 w-4" />
-                Add Knowledge
-              </Button>
-            </CardContent>
-          </Card>
-
-          {/* File Upload Section */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Upload Knowledge File</CardTitle>
-              <CardDescription>
-                Upload documents, PDFs, or text files containing business knowledge
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
               <div className="flex items-center justify-center w-full">
+
                 <label
                   htmlFor="file-upload"
                   className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50"
                 >
                   <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                    <Upload className="w-8 h-8 mb-4 text-gray-500" />
+                    <Upload className="w-8 h-8 mb-4 text-gray-500" />``
                     <p className="mb-2 text-sm text-gray-500">
                       <span className="font-semibold">Click to upload</span> or drag and drop
                     </p>
@@ -185,6 +170,10 @@ const KnowledgeBase = () => {
                   />
                 </label>
               </div>
+              <Button onClick={handleAddTextKnowledge} className="w-full">
+                <FileText className="mr-2 h-4 w-4" />
+                Add Knowledge
+              </Button>
             </CardContent>
           </Card>
         </TabsContent>
