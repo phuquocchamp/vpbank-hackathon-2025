@@ -5,17 +5,18 @@ import Layout from '../../components/layout/Layout';
 import LoginPage from '../../pages/auth/LoginPage';
 
 // Client pages
-import Dashboard from '../../pages/client/dashboard/Dashboard';
-import Conversation from '../../pages/client/conversation/Conversation';
 import Analytics from '../../pages/client/analytics/Analytics';
+import Conversation from '../../pages/client/conversation/Conversation';
+import Dashboard from '../../pages/client/dashboard/Dashboard';
 
 // Admin pages
+import { PlaceholderPage } from '@/components/common/SampleComponent';
+import AdminConversation from '@/pages/admin/conversation/AdminConversation';
+import AdminHelp from '@/pages/admin/help/AdminHelp';
+import KnowledgeBase from '@/pages/admin/knowledge-base/KnowledgeBase';
+import SystemReport from '@/pages/admin/report/SystemReport';
 import AdminDashboard from '../../pages/admin/dashboard/AdminDashboard';
 import UserManagement from '../../pages/admin/user/UserManagement';
-import KnowledgeBase from '@/pages/admin/knowledge-base/KnowledgeBase';
-import AdminHelp from '@/pages/admin/help/AdminHelp';
-import { PlaceholderPage } from '@/components/common/SampleComponent';
-import SystemReport from '@/pages/admin/report/SystemReport';
 
 
 // Create router
@@ -83,6 +84,14 @@ export const router = createBrowserRouter([
       {
         path: 'knowledge-base',
         element: <KnowledgeBase />,
+      },
+      {
+        path: 'conversations',
+        element: <AdminConversation />,
+      },
+      {
+        path: 'conversations/:conversationId',
+        element: <AdminConversation />,
       },
       {
         path: 'help',
