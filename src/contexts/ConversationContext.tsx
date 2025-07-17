@@ -215,8 +215,19 @@ export const ConversationProvider: React.FC<{ children: React.ReactNode }> = ({ 
 
       if (!response.ok) throw new Error('Failed to send message');
 
-      const assistantMessage = await response.json();
-      dispatch({ type: 'ADD_MESSAGE', payload: { conversationId, message: assistantMessage } });
+      const data = await response.json();
+
+      // Process the response structure
+      if (data.assistant) {
+        const assistantMessage: Message = {
+          id: data.assistant.id,
+          content: data.assistant.content,
+          role: data.assistant.role,
+          timestamp: new Date(data.assistant.timestamp),
+        };
+
+        dispatch({ type: 'ADD_MESSAGE', payload: { conversationId, message: assistantMessage } });
+      }
     } catch (error) {
       dispatch({ type: 'SET_ERROR', payload: error instanceof Error ? error.message : 'Unknown error' });
     }

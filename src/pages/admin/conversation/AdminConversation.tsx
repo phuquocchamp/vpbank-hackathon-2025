@@ -39,6 +39,8 @@ const AdminConversation = () => {
       await sendMessage(conversationId, message);
     } catch (error) {
       console.error('Failed to send message:', error);
+      // Show error message to user
+      // You might want to add an error state here
     } finally {
       setIsTyping(false);
     }
@@ -119,7 +121,7 @@ const AdminConversation = () => {
                   className={`max-w-[70%] ${message.role === 'user'
                     ? 'bg-blue-600 text-white'
                     : 'bg-gray-100 text-gray-900'
-                    } rounded-lg px-4 py-2`}
+                    } rounded-lg px-4 py-2 shadow-sm`}
                 >
                   <div className="flex items-center gap-2 mb-1">
                     {message.role === 'user' ? (
@@ -131,7 +133,9 @@ const AdminConversation = () => {
                       {message.role === 'user' ? 'Admin' : 'AI Assistant'}
                     </span>
                   </div>
-                  <p className="text-sm whitespace-pre-wrap">{message.content}</p>
+                  <div className="text-sm whitespace-pre-wrap break-words">
+                    {message.content}
+                  </div>
                   <p className="text-xs opacity-75 mt-1">
                     {message.timestamp instanceof Date
                       ? message.timestamp.toLocaleTimeString()
@@ -154,11 +158,11 @@ const AdminConversation = () => {
 
         {isTyping && (
           <div className="flex justify-start">
-            <div className="bg-gray-100 rounded-lg px-4 py-2">
+            <div className="bg-gray-100 rounded-lg px-4 py-2 shadow-sm">
               <div className="flex items-center gap-2">
                 <Bot className="size-4" />
                 <span className="text-xs text-gray-500">AI Assistant is typing...</span>
-                <div className="flex space-x-1">
+                <div className="flex space-x-1 ml-2">
                   <div className="w-1 h-1 bg-gray-500 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
                   <div className="w-1 h-1 bg-gray-500 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
                   <div className="w-1 h-1 bg-gray-500 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
