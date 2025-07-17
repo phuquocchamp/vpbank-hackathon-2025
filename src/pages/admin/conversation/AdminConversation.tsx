@@ -41,6 +41,9 @@ const AdminConversation = () => {
     }
   };
 
+  console.log("currentConversation", state.currentConversation);
+  console.log("messages array:", state.currentConversation?.messages);
+
   if (!conversationId) {
     return (
       <div className="flex items-center justify-center h-full">
@@ -86,34 +89,46 @@ const AdminConversation = () => {
 
       {/* Messages */}
       <div className="flex-1 overflow-y-auto p-6 space-y-4">
-        {(state.currentConversation?.messages ?? []).map((message) => (
-          <div
-            key={message.id}
-            className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
-          >
+        {Array.isArray(state.currentConversation?.messages) && state.currentConversation.messages.length > 0 ? (
+          state.currentConversation.messages.map((message) => (
             <div
-              className={`max-w-[70%] ${message.role === 'user'
-                ? 'bg-blue-600 text-white'
-                : 'bg-gray-100 text-gray-900'
-                } rounded-lg px-4 py-2`}
+              key={message.id}
+              className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
             >
-              <div className="flex items-center gap-2 mb-1">
-                {message.role === 'user' ? (
-                  <User className="size-4" />
-                ) : (
-                  <Bot className="size-4" />
-                )}
-                <span className="text-xs opacity-75">
-                  {message.role === 'user' ? 'Admin' : 'AI Assistant'}
-                </span>
+              <div
+                className={`max-w-[70%] ${message.role === 'user'
+                  ? 'bg-blue-600 text-white'
+                  : 'bg-gray-100 text-gray-900'
+                  } rounded-lg px-4 py-2`}
+              >
+                <div className="flex items-center gap-2 mb-1">
+                  {message.role === 'user' ? (
+                    <User className="size-4" />
+                  ) : (
+                    <Bot className="size-4" />
+                  )}
+                  <span className="text-xs opacity-75">
+                    {message.role === 'user' ? 'Admin' : 'AI Assistant'}
+                  </span>
+                </div>
+                <p className="text-sm">{message.content}</p>
+                <p className="text-xs opacity-75 mt-1">
+                  {message.timestamp instanceof Date
+                    ? message.timestamp.toLocaleTimeString()
+                    : new Date(message.timestamp).toLocaleTimeString()}
+                </p>
               </div>
-              <p className="text-sm">{message.content}</p>
-              <p className="text-xs opacity-75 mt-1">
-                {message.timestamp.toLocaleTimeString()}
-              </p>
+            </div>
+          ))
+        ) : (
+          <div className="flex items-center justify-center h-32">
+            <div className="text-center text-gray-500">
+              <Bot className="size-8 mx-auto mb-2 opacity-50" />
+              <p>No messages yet</p>
+              <p className="text-sm">Start the conversation!</p>
             </div>
           </div>
-        ))}
+        )}
 
         {isTyping && (
           <div className="flex justify-start">

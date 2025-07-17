@@ -10,12 +10,12 @@ interface Message {
 }
 
 interface Conversation {
-  id: string;
+  conversationId: string;
+  userId: string;
   title: string;
   messages: Message[];
   createdAt: Date;
   updatedAt: Date;
-  userId: string;
 }
 
 interface ConversationState {
@@ -45,30 +45,30 @@ const initialState: ConversationState = {
 const conversationReducer = (state: ConversationState, action: ConversationAction): ConversationState => {
   switch (action.type) {
     case 'SET_CONVERSATIONS':
-      return { ...state, conversations: action.payload };
+      return { ...state, conversations: Array.isArray(action.payload) ? action.payload : [] };
     case 'SET_CURRENT_CONVERSATION':
       return { ...state, currentConversation: action.payload };
     case 'CREATE_CONVERSATION':
       return {
         ...state,
-        conversations: [action.payload, ...state.conversations],
+        conversations: [action.payload, ...(state.conversations || [])],
         currentConversation: action.payload,
       };
     case 'UPDATE_CONVERSATION':
       return {
         ...state,
         conversations: state.conversations.map(conv =>
-          conv.id === action.payload.id ? action.payload : conv
+          conv.conversationId === action.payload.conversationId ? action.payload : conv
         ),
-        currentConversation: state.currentConversation?.id === action.payload.id
+        currentConversation: state.currentConversation?.conversationId === action.payload.conversationId
           ? action.payload
           : state.currentConversation,
       };
     case 'DELETE_CONVERSATION':
       return {
         ...state,
-        conversations: state.conversations.filter(conv => conv.id !== action.payload),
-        currentConversation: state.currentConversation?.id === action.payload
+        conversations: state.conversations.filter(conv => conv.conversationId !== action.payload),
+        currentConversation: state.currentConversation?.conversationId === action.payload
           ? null
           : state.currentConversation,
       };
@@ -76,11 +76,11 @@ const conversationReducer = (state: ConversationState, action: ConversationActio
       return {
         ...state,
         conversations: state.conversations.map(conv =>
-          conv.id === action.payload.conversationId
+          conv.conversationId === action.payload.conversationId
             ? { ...conv, messages: [...conv.messages, action.payload.message], updatedAt: new Date() }
             : conv
         ),
-        currentConversation: state.currentConversation?.id === action.payload.conversationId
+        currentConversation: state.currentConversation?.conversationId === action.payload.conversationId
           ? {
             ...state.currentConversation,
             messages: [...state.currentConversation.messages, action.payload.message],
@@ -104,6 +104,7 @@ interface ConversationContextType {
   sendMessage: (conversationId: string, content: string) => Promise<void>;
   deleteConversation: (id: string) => Promise<void>;
   loadConversations: () => Promise<void>;
+  updateConversationTitle: (id: string, title: string) => Promise<void>;
 }
 
 const ConversationContext = createContext<ConversationContextType | undefined>(undefined);
@@ -115,7 +116,7 @@ export const ConversationProvider: React.FC<{ children: React.ReactNode }> = ({ 
     dispatch({ type: 'SET_LOADING', payload: true });
     try {
       const newConversation: Conversation = {
-        id: uuidv4(),
+        conversationId: uuidv4(),
         title: 'New Chat',
         messages: [],
         createdAt: new Date(),
@@ -148,11 +149,28 @@ export const ConversationProvider: React.FC<{ children: React.ReactNode }> = ({ 
     try {
       const response = await fetch(`${API_BASE_URL}/admin/conversations?id=${id}`);
 
-
       if (!response.ok) throw new Error('Failed to load conversation');
 
-      const conversation = await response.json();
-      dispatch({ type: 'SET_CURRENT_CONVERSATION', payload: conversation });
+      const data = await response.json();
+      // Extract the first conversation from the conversations array
+      const rawConversation = data.conversations && data.conversations.length > 0 ? data.conversations[0] : null;
+
+      if (rawConversation) {
+        // Parse dates from string to Date objects
+        const conversation: Conversation = {
+          ...rawConversation,
+          createdAt: new Date(rawConversation.createdAt),
+          updatedAt: new Date(rawConversation.updatedAt),
+          messages: rawConversation.messages.map((msg: any) => ({
+            ...msg,
+            timestamp: new Date(msg.timestamp)
+          }))
+        };
+
+        dispatch({ type: 'SET_CURRENT_CONVERSATION', payload: conversation });
+      } else {
+        throw new Error('Conversation not found');
+      }
     } catch (error) {
       dispatch({ type: 'SET_ERROR', payload: error instanceof Error ? error.message : 'Unknown error' });
     } finally {
@@ -163,7 +181,7 @@ export const ConversationProvider: React.FC<{ children: React.ReactNode }> = ({ 
   const sendMessage = useCallback(async (conversationId: string, content: string): Promise<void> => {
     const userMessage: Message = {
       id: uuidv4(),
-      content,
+      content: content,
       role: 'user',
       timestamp: new Date(),
     };
@@ -174,7 +192,7 @@ export const ConversationProvider: React.FC<{ children: React.ReactNode }> = ({ 
       const response = await fetch(`${API_BASE_URL}/admin/conversations/${conversationId}/messages`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ content }),
+        body: JSON.stringify({ content: content }),
       });
 
       if (!response.ok) throw new Error('Failed to send message');
@@ -200,13 +218,42 @@ export const ConversationProvider: React.FC<{ children: React.ReactNode }> = ({ 
     }
   }, []);
 
+  const updateConversationTitle = useCallback(async (id: string, title: string): Promise<void> => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/admin/conversations/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ title }),
+      });
+
+      if (!response.ok) throw new Error('Failed to update conversation title');
+
+      const updatedConversation = await response.json();
+      dispatch({ type: 'UPDATE_CONVERSATION', payload: updatedConversation });
+    } catch (error) {
+      dispatch({ type: 'SET_ERROR', payload: error instanceof Error ? error.message : 'Unknown error' });
+      throw error;
+    }
+  }, []);
+
   const loadConversations = useCallback(async (): Promise<void> => {
     dispatch({ type: 'SET_LOADING', payload: true });
     try {
       const response = await fetch(`${API_BASE_URL}/admin/conversations`);
       if (!response.ok) throw new Error('Failed to load conversations');
 
-      const conversations = await response.json();
+      const data = await response.json();
+      // Extract conversations array from API response and parse dates
+      const rawConversations = data.conversations || [];
+      const conversations = rawConversations.map((conv: any) => ({
+        ...conv,
+        createdAt: new Date(conv.createdAt),
+        updatedAt: new Date(conv.updatedAt),
+        messages: conv.messages.map((msg: any) => ({
+          ...msg,
+          timestamp: new Date(msg.timestamp)
+        }))
+      }));
 
       dispatch({ type: 'SET_CONVERSATIONS', payload: conversations });
     } catch (error) {
@@ -225,6 +272,7 @@ export const ConversationProvider: React.FC<{ children: React.ReactNode }> = ({ 
         sendMessage,
         deleteConversation,
         loadConversations,
+        updateConversationTitle,
       }}
     >
       {children}

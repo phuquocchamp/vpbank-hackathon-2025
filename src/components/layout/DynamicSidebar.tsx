@@ -4,10 +4,13 @@ import {
   Activity,
   BarChart3,
   Database,
+  Edit,
   FileText,
   HelpCircle,
+  History,
   Home,
   MessageCircle,
+  Minus,
   MoreHorizontal,
   Plus,
   Trash2,
@@ -17,6 +20,11 @@ import { useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 
 import { Button } from '@/components/ui/button';
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from '@/components/ui/collapsible';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -33,6 +41,9 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
+  SidebarMenuSub,
+  SidebarMenuSubButton,
+  SidebarMenuSubItem,
   SidebarRail,
   SidebarTrigger
 } from '@/components/ui/sidebar';
@@ -126,7 +137,7 @@ export function DynamicSidebar({ ...props }: React.ComponentProps<typeof Sidebar
   const handleNewChat = async () => {
     try {
       const newConversation = await createNewConversation();
-      navigate(`/admin/conversations/${newConversation.id}`);
+      navigate(`/admin/conversations/${newConversation.conversationId}`);
     } catch (error) {
       console.error('Failed to create new chat:', error);
     }
@@ -146,17 +157,18 @@ export function DynamicSidebar({ ...props }: React.ComponentProps<typeof Sidebar
     }
   };
 
-  const formatDate = (date: Date | string) => {
-    const dateObj = date instanceof Date ? date : new Date(date);
-    if (isNaN(dateObj.getTime())) return '';
-    const now = new Date();
-    const diffTime = Math.abs(now.getTime() - dateObj.getTime());
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+  const handleChangeConversationTitle = async (conversationId: string, event: React.MouseEvent) => {
+    //   event.preventDefault();
+    //   event.stopPropagation();
 
-    if (diffDays === 1) return 'Today';
-    if (diffDays === 2) return 'Yesterday';
-    if (diffDays <= 7) return `${diffDays} days ago`;
-    return dateObj.toLocaleDateString();
+    //   // You can implement this function based on your conversation context
+    //   // For now, it's just a placeholder
+    //   const newTitle = prompt('Enter new title:');
+    //   if (newTitle) {
+    //     // Implement the logic to update conversation title
+    //     // This might require adding an updateConversationTitle function to your conversation context
+    //     console.log('Updating conversation title:', conversationId, newTitle);
+    //   }
   };
 
   // Filter menu items based on user role
@@ -170,7 +182,7 @@ export function DynamicSidebar({ ...props }: React.ComponentProps<typeof Sidebar
       return {
         title: 'VPBank Admin',
         subtitle: 'Admin Console',
-        color: 'bg-red-600'
+        color: 'bg-blue-700'
       };
     }
     return {
@@ -181,9 +193,6 @@ export function DynamicSidebar({ ...props }: React.ComponentProps<typeof Sidebar
   };
 
   const brandInfo = getBrandInfo();
-  console.log("Conversations", state.conversations);
-  console.log('Conversations', state.conversations.length);
-
   return (
     <Sidebar collapsible="icon" {...props}>
       <SidebarHeader>
@@ -230,59 +239,6 @@ export function DynamicSidebar({ ...props }: React.ComponentProps<typeof Sidebar
           </SidebarGroup>
         )}
 
-        {/* Conversation History for Admin */}
-
-        {user?.role === 'ADMIN' && state.conversations.length > 0 && (
-          <SidebarGroup>
-            <SidebarGroupLabel>Recent Conversations</SidebarGroupLabel>
-            <SidebarGroupContent>
-              <SidebarMenu>
-                {state.conversations.slice(0, 10).map((conversation) => (
-                  <SidebarMenuItem key={conversation.id}>
-                    <SidebarMenuButton
-                      asChild
-                      isActive={location.pathname === `/admin/conversations/${conversation.id}`}
-                      tooltip={conversation.title}
-                    >
-                      <Link to={`/admin/conversations/${conversation.id}`} className="group">
-                        <MessageCircle className="size-4" />
-                        <div className="flex-1 min-w-0">
-                          <div className="truncate text-sm font-medium">
-                            {conversation.title}
-                          </div>
-                          <div className="text-xs text-muted-foreground">
-                            {formatDate(conversation.updatedAt)}
-                          </div>
-                        </div>
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="h-6 w-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
-                            >
-                              <MoreHorizontal className="size-3" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            <DropdownMenuItem
-                              onClick={(e) => handleDeleteConversation(conversation.id, e)}
-                              className="text-red-600"
-                            >
-                              <Trash2 className="size-4 mr-2" />
-                              Delete
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </Link>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                ))}
-              </SidebarMenu>
-            </SidebarGroupContent>
-          </SidebarGroup>
-        )}
-
         {/* Main Navigation */}
         <SidebarGroup>
           <SidebarGroupLabel>Main</SidebarGroupLabel>
@@ -310,6 +266,77 @@ export function DynamicSidebar({ ...props }: React.ComponentProps<typeof Sidebar
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
+
+        {/* Conversation History for Admin */}
+        {user?.role === 'ADMIN' && state?.conversations && state.conversations.length > 0 && (
+          <SidebarGroup>
+            <SidebarMenu>
+              <Collapsible defaultOpen className="group/collapsible">
+                <SidebarMenuItem>
+                  <CollapsibleTrigger asChild>
+                    <SidebarMenuButton>
+                      <History className="size-4" />
+                      Recent Conversations
+                      <Plus className="ml-auto group-data-[state=open]/collapsible:hidden" />
+                      <Minus className="ml-auto group-data-[state=closed]/collapsible:hidden" />
+                    </SidebarMenuButton>
+                  </CollapsibleTrigger>
+                  <CollapsibleContent>
+                    <SidebarMenuSub>
+                      {state.conversations.slice(0, 10).map((conversation) => (
+                        <SidebarMenuSubItem key={conversation.conversationId}>
+                          <SidebarMenuSubButton
+                            asChild
+                            isActive={location.pathname === `/admin/conversations/${conversation.conversationId}`}
+                          >
+                            <Link to={`/admin/conversations/${conversation.conversationId}`} className="group">
+                              <MessageCircle className="size-4" />
+                              <div className="flex-1 min-w-0">
+                                <div className="truncate text-sm font-medium">
+                                  {conversation.title}
+                                </div>
+                                {/* <div className="text-xs text-muted-foreground">
+                                  {formatDate(conversation.updatedAt)}
+                                </div> */}
+                              </div>
+                              <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    className="h-6 w-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
+                                  >
+                                    <MoreHorizontal className="size-3" />
+                                  </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="start">
+                                  <DropdownMenuItem
+                                    onClick={(e: React.MouseEvent) => handleChangeConversationTitle(conversation.conversationId, e)}
+                                    className="text-blue-600"
+                                  >
+                                    <Edit className="size-4 mr-2" />
+                                    Change Title
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem
+                                    onClick={(e: React.MouseEvent) => handleDeleteConversation(conversation.conversationId, e)}
+                                    className="text-red-600"
+                                  >
+                                    <Trash2 className="size-4 mr-2" />
+                                    Delete
+                                  </DropdownMenuItem>
+                                </DropdownMenuContent>
+                              </DropdownMenu>
+                            </Link>
+                          </SidebarMenuSubButton>
+                        </SidebarMenuSubItem>
+                      ))}
+                    </SidebarMenuSub>
+                  </CollapsibleContent>
+                </SidebarMenuItem>
+              </Collapsible>
+            </SidebarMenu>
+          </SidebarGroup>
+        )}
       </SidebarContent>
 
       <SidebarRail />
