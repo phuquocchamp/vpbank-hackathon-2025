@@ -6,7 +6,7 @@ import { Activity, Terminal, AlertCircle, CheckCircle, Info, Clock, RefreshCw, C
 import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { ChartContainer, ChartTooltip } from '@/components/ui/chart';
-import { PieChart, Pie, Cell, AreaChart, Area, XAxis, YAxis, CartesianGrid } from 'recharts';
+import { PieChart, Pie, Cell, AreaChart, Area, XAxis, YAxis, CartesianGrid, BarChart, Bar } from 'recharts';
 
 // Interface for log data based on API response structure
 interface LogEntry {
@@ -24,10 +24,20 @@ interface LogData {
   logs: LogEntry[];
 }
 
+interface BillingEntry {
+  date: string;
+  cost: number;
+}
+
 const AdminDashboard = () => {
   const [logData, setLogData] = useState<LogData | null>(null);
   const [isLoadingLogs, setIsLoadingLogs] = useState(true);
   const [logError, setLogError] = useState<string | null>(null);
+  
+  // Billing states
+  const [billingData, setBillingData] = useState<BillingEntry[] | null>(null);
+  const [isLoadingBilling, setIsLoadingBilling] = useState(true);
+  const [billingError, setBillingError] = useState<string | null>(null);
   
   // Pagination states
   const [currentPage, setCurrentPage] = useState(1);
@@ -70,10 +80,87 @@ const AdminDashboard = () => {
     }
   };
 
-  // Load logs on component mount
+  // Fetch billing data from API
+  const fetchBilling = async () => {
+    setIsLoadingBilling(true);
+    setBillingError(null);
+    
+    try {
+      const response = await fetch(`${BASE_URL}/billing`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const result = await response.json();
+      
+      // API response có cấu trúc { body: [{ date, cost }, ...] }
+      if (result.body && Array.isArray(result.body)) {
+        setBillingData(result.body);
+      } else if (Array.isArray(result)) {
+        setBillingData(result);
+      } else {
+        throw new Error('Invalid billing data format');
+      }
+    } catch (error) {
+      console.error('Failed to fetch billing data:', error);
+      setBillingError(error instanceof Error ? error.message : 'Failed to fetch billing data');
+      // Set mock data as fallback
+      setBillingData([
+        { date: "2025-07-01", cost: 6.2 },
+        { date: "2025-07-02", cost: 0 },
+        { date: "2025-07-03", cost: 8.5 },
+        { date: "2025-07-04", cost: 12.3 },
+        { date: "2025-07-05", cost: 15.7 },
+        { date: "2025-07-06", cost: 9.1 },
+        { date: "2025-07-07", cost: 11.4 },
+        { date: "2025-07-08", cost: 7.8 },
+        { date: "2025-07-09", cost: 13.2 },
+        { date: "2025-07-10", cost: 10.6 },
+        { date: "2025-07-11", cost: 14.9 },
+        { date: "2025-07-12", cost: 8.3 },
+        { date: "2025-07-13", cost: 16.1 },
+        { date: "2025-07-14", cost: 12.7 },
+        { date: "2025-07-15", cost: 9.5 },
+        { date: "2025-07-16", cost: 11.8 },
+        { date: "2025-07-17", cost: 13.6 }
+      ]);
+    } finally {
+      setIsLoadingBilling(false);
+    }
+  };
+
+  // Load logs and billing data on component mount
   useEffect(() => {
     fetchLogs();
+    fetchBilling();
   }, []);
+
+  // Mock billing data - fallback khi không có API
+  const mockBillingData: BillingEntry[] = [
+    { date: "2025-07-01", cost: 6.2 },
+    { date: "2025-07-02", cost: 0 },
+    { date: "2025-07-03", cost: 8.5 },
+    { date: "2025-07-04", cost: 12.3 },
+    { date: "2025-07-05", cost: 15.7 },
+    { date: "2025-07-06", cost: 9.1 },
+    { date: "2025-07-07", cost: 11.4 },
+    { date: "2025-07-08", cost: 7.8 },
+    { date: "2025-07-09", cost: 13.2 },
+    { date: "2025-07-10", cost: 10.6 },
+    { date: "2025-07-11", cost: 14.9 },
+    { date: "2025-07-12", cost: 8.3 },
+    { date: "2025-07-13", cost: 16.1 },
+    { date: "2025-07-14", cost: 12.7 },
+    { date: "2025-07-15", cost: 9.5 },
+    { date: "2025-07-16", cost: 11.8 },
+    { date: "2025-07-17", cost: 13.6 }
+  ];
 
   // Mock data dựa trên response từ BE (JSON từ ảnh) - fallback khi không có API
   const mockLogData: LogData = {
@@ -199,6 +286,23 @@ const AdminDashboard = () => {
     ].filter(item => item.value > 0);
     
     return data;
+  };
+
+  const getBillingChartData = () => {
+    const currentBillingData = billingData || mockBillingData;
+    return currentBillingData.map(entry => ({
+      ...entry,
+      formattedDate: new Date(entry.date).toLocaleDateString('en-US', { 
+        month: 'short', 
+        day: 'numeric' 
+      }),
+      formattedCost: `$${entry.cost.toFixed(2)}`
+    }));
+  };
+
+  const getTotalBillingCost = () => {
+    const currentBillingData = billingData || mockBillingData;
+    return currentBillingData.reduce((total, entry) => total + entry.cost, 0);
   };
 
   const getTimelineChartData = () => {
@@ -507,6 +611,109 @@ const AdminDashboard = () => {
           </CardContent>
         </Card>
       </div>
+
+      {/* Billing Chart Section */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <TrendingUp className="h-5 w-5" />
+            Billing Trends
+            <Badge variant="secondary" className="ml-2">
+              Total: ${getTotalBillingCost().toFixed(2)}
+            </Badge>
+            <Button
+              onClick={fetchBilling}
+              disabled={isLoadingBilling}
+              variant="outline"
+              size="sm"
+              className="ml-auto"
+            >
+              {isLoadingBilling ? (
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current mr-2"></div>
+              ) : (
+                <RefreshCw className="h-4 w-4 mr-2" />
+              )}
+              Refresh
+            </Button>
+          </CardTitle>
+          <p className="text-sm text-muted-foreground">
+            Daily billing costs over time • Total: ${getTotalBillingCost().toFixed(2)}
+          </p>
+        </CardHeader>
+        <CardContent>
+          {billingError ? (
+            <div className="flex items-center justify-center p-8">
+              <div className="text-center">
+                <AlertCircle className="h-8 w-8 text-red-400 mx-auto mb-2" />
+                <p className="text-red-600 font-medium">Error loading billing data</p>
+                <p className="text-gray-500 text-sm">{billingError}</p>
+                <Button onClick={fetchBilling} variant="outline" size="sm" className="mt-2">
+                  Try Again
+                </Button>
+              </div>
+            </div>
+          ) : isLoadingBilling ? (
+            <div className="flex items-center justify-center p-8">
+              <div className="text-center">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-2"></div>
+                <p className="text-gray-500">Loading billing data...</p>
+              </div>
+            </div>
+          ) : (
+            <ChartContainer config={chartConfig} className="aspect-[16/6] w-full max-h-[400px]">
+              <BarChart data={getBillingChartData()}>
+                <defs>
+                  <linearGradient id="billingGradient" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.8}/>
+                    <stop offset="95%" stopColor="#3b82f6" stopOpacity={0.4}/>
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" className="opacity-30" />
+                <XAxis 
+                  dataKey="formattedDate" 
+                  className="text-xs"
+                  tick={{ fill: '#6b7280', fontSize: 11 }}
+                  interval="preserveStartEnd"
+                  minTickGap={10}
+                />
+                <YAxis 
+                  className="text-xs"
+                  tick={{ fill: '#6b7280', fontSize: 11 }}
+                  width={40}
+                  tickFormatter={(value) => `$${value}`}
+                />
+                <ChartTooltip 
+                  content={({ active, payload, label }) => {
+                    if (active && payload && payload.length) {
+                      const data = payload[0].payload;
+                      return (
+                        <div className="bg-white border border-gray-200 rounded-lg shadow-lg p-3">
+                          <p className="font-semibold text-gray-900 mb-2">{label}</p>
+                          <p className="text-sm text-blue-600">
+                            Cost: {data.formattedCost}
+                          </p>
+                          <p className="text-xs text-gray-500">
+                            Date: {data.date}
+                          </p>
+                        </div>
+                      );
+                    }
+                    return null;
+                  }}
+                />
+                <Bar
+                  dataKey="cost"
+                  fill="url(#billingGradient)"
+                  stroke="#3b82f6"
+                  strokeWidth={1}
+                  radius={[4, 4, 0, 0]}
+                  name="Daily Cost"
+                />
+              </BarChart>
+            </ChartContainer>
+          )}
+        </CardContent>
+      </Card>
 
       {/* System Logs Section */}
       <Card>
