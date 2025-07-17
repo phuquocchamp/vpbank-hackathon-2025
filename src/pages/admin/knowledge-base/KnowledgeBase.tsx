@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Textarea } from "@/components/ui/textarea"
-import { Edit, FileDown, FileText, Trash2, Upload } from 'lucide-react'
+import { FileText, Trash2, Upload } from 'lucide-react'
 import { useEffect, useState } from 'react'
 
 interface KnowledgeBaseItem {
@@ -35,10 +35,10 @@ const KnowledgeBase = () => {
   const [error, setError] = useState<string | null>(null)
   const [newKnowledgeText, setNewKnowledgeText] = useState('')
   const [newKnowledgeTitle, setNewKnowledgeTitle] = useState('')
-  const [selectedFile, setSelectedFile] = useState<File | null>(null)
-  const [editingId, setEditingId] = useState<string | null>(null)
-  const [editTitle, setEditTitle] = useState('')
-  const [editContent, setEditContent] = useState('')
+  // const [selectedFile, setSelectedFile] = useState<File | null>(null)
+  // const [editingId, setEditingId] = useState<string | null>(null)
+  // const [editTitle, setEditTitle] = useState('')
+  // const [editContent, setEditContent] = useState('')
   const [isAdding, setIsAdding] = useState(false)
   const [isDeleting, setIsDeleting] = useState<string | null>(null)
 
@@ -147,7 +147,7 @@ const KnowledgeBase = () => {
       // Reset form
       setNewKnowledgeTitle('')
       setNewKnowledgeText('')
-      setSelectedFile(null)
+      // setSelectedFile(null)
       event.target.value = ''
       setError(null)
     } catch (err) {
@@ -207,30 +207,30 @@ const KnowledgeBase = () => {
     }
   }
 
-  const handleEdit = (item: KnowledgeBaseItem) => {
-    setEditingId(item.knowledgebaseId)
-    setEditTitle(item.title)
-    setEditContent(item.description)
-  }
+  // const handleEdit = (item: KnowledgeBaseItem) => {
+  //   // setEditingId(item.knowledgebaseId)
+  //   // setEditTitle(item.title)
+  //   // setEditContent(item.description)
+  // }
 
-  const handleSaveEdit = () => {
-    if (editingId) {
-      setKnowledgeItems(knowledgeItems.map(item =>
-        item.knowledgebaseId === editingId
-          ? { ...item, title: editTitle, description: editContent }
-          : item
-      ))
-      setEditingId(null)
-      setEditTitle('')
-      setEditContent('')
-    }
-  }
+  // const handleSaveEdit = () => {
+  //   if (editingId) {
+  //     setKnowledgeItems(knowledgeItems.map(item =>
+  //       item.knowledgebaseId === editingId
+  //         ? { ...item, title: editTitle, description: editContent }
+  //         : item
+  //     ))
+  //     setEditingId(null)
+  //     setEditTitle('')
+  //     setEditContent('')
+  //   }
+  // }
 
-  const handleCancelEdit = () => {
-    setEditingId(null)
-    setEditTitle('')
-    setEditContent('')
-  }
+  // const handleCancelEdit = () => {
+  //   setEditingId(null)
+  //   setEditTitle('')
+  //   setEditContent('')
+  // }
 
   const getFileTypeFromMetadata = (item: KnowledgeBaseItem) => {
     return item.metadata.fileType || 'file'
@@ -372,9 +372,9 @@ const KnowledgeBase = () => {
                           </div>
                         </div>
                         <div className="flex gap-2">
-                          <Button size="sm" variant="outline" onClick={() => handleEdit(item)}>
+                          {/* <Button size="sm" variant="outline" onClick={() => handleEdit(item)}>
                             <Edit className="h-4 w-4" />
-                          </Button>
+                          </Button> */}
                           {/* <Button size="sm" variant="default" onClick={() => handleDownload(item.knowledgebaseId)}>
                             <FileDown className="h-4 w-4" />
                           </Button> */}
