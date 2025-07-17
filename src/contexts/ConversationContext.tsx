@@ -33,7 +33,8 @@ type ConversationAction =
   | { type: 'DELETE_CONVERSATION'; payload: string }
   | { type: 'ADD_MESSAGE'; payload: { conversationId: string; message: Message } }
   | { type: 'SET_LOADING'; payload: boolean }
-  | { type: 'SET_ERROR'; payload: string | null };
+  | { type: 'SET_ERROR'; payload: string | null }
+  | { type: 'CLEAR_CURRENT_CONVERSATION' };
 
 const initialState: ConversationState = {
   conversations: [],
@@ -92,6 +93,8 @@ const conversationReducer = (state: ConversationState, action: ConversationActio
       return { ...state, loading: action.payload };
     case 'SET_ERROR':
       return { ...state, error: action.payload };
+    case 'CLEAR_CURRENT_CONVERSATION':
+      return { ...state, currentConversation: null };
     default:
       return state;
   }
@@ -105,6 +108,7 @@ interface ConversationContextType {
   deleteConversation: (id: string) => Promise<void>;
   loadConversations: () => Promise<void>;
   updateConversationTitle: (id: string, title: string) => Promise<void>;
+  setCurrentConversation: (conversation: Conversation | null) => void;
 }
 
 const ConversationContext = createContext<ConversationContextType | undefined>(undefined);
@@ -144,19 +148,33 @@ export const ConversationProvider: React.FC<{ children: React.ReactNode }> = ({ 
     }
   }, []);
 
+  const setCurrentConversation = useCallback((conversation: Conversation | null) => {
+    if (conversation) {
+      dispatch({ type: 'SET_CURRENT_CONVERSATION', payload: conversation });
+    } else {
+      dispatch({ type: 'CLEAR_CURRENT_CONVERSATION' });
+    }
+  }, []);
+
   const loadConversation = useCallback(async (id: string): Promise<void> => {
     dispatch({ type: 'SET_LOADING', payload: true });
     try {
-      const response = await fetch(`${API_BASE_URL}/admin/conversations?id=${id}`);
+      // First check if conversation exists in current state
+      const existingConversation = state.conversations.find(conv => conv.conversationId === id);
+      if (existingConversation) {
+        dispatch({ type: 'SET_CURRENT_CONVERSATION', payload: existingConversation });
+        dispatch({ type: 'SET_LOADING', payload: false });
+        return;
+      }
 
+      // If not found, fetch from API
+      const response = await fetch(`${API_BASE_URL}/admin/conversations?id=${id}`);
       if (!response.ok) throw new Error('Failed to load conversation');
 
       const data = await response.json();
-      // Extract the first conversation from the conversations array
       const rawConversation = data.conversations && data.conversations.length > 0 ? data.conversations[0] : null;
 
       if (rawConversation) {
-        // Parse dates from string to Date objects
         const conversation: Conversation = {
           ...rawConversation,
           createdAt: new Date(rawConversation.createdAt),
@@ -176,7 +194,7 @@ export const ConversationProvider: React.FC<{ children: React.ReactNode }> = ({ 
     } finally {
       dispatch({ type: 'SET_LOADING', payload: false });
     }
-  }, []);
+  }, [state.conversations]);
 
   const sendMessage = useCallback(async (conversationId: string, content: string): Promise<void> => {
     const userMessage: Message = {
@@ -273,6 +291,7 @@ export const ConversationProvider: React.FC<{ children: React.ReactNode }> = ({ 
         deleteConversation,
         loadConversations,
         updateConversationTitle,
+        setCurrentConversation,
       }}
     >
       {children}

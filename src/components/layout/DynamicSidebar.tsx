@@ -114,7 +114,7 @@ const menuItems: MenuItem[] = [
 
 export function DynamicSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const { user } = useAuth();
-  const { state, createNewConversation, loadConversations, deleteConversation } = useConversation();
+  const { state, createNewConversation, loadConversations, deleteConversation, setCurrentConversation } = useConversation();
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -169,6 +169,11 @@ export function DynamicSidebar({ ...props }: React.ComponentProps<typeof Sidebar
     //     // This might require adding an updateConversationTitle function to your conversation context
     //     console.log('Updating conversation title:', conversationId, newTitle);
     //   }
+  };
+
+  const handleConversationClick = (conversation: any) => {
+    setCurrentConversation(conversation);
+    navigate(`/admin/conversations/${conversation.conversationId}`);
   };
 
   // Filter menu items based on user role
@@ -268,7 +273,7 @@ export function DynamicSidebar({ ...props }: React.ComponentProps<typeof Sidebar
         </SidebarGroup>
 
         {/* Conversation History for Admin */}
-        {user?.role === 'ADMIN' && state?.conversations && state.conversations.length > 0 && (
+        {user?.role === 'ADMIN' && (
           <SidebarGroup>
             <SidebarMenu>
               <Collapsible defaultOpen className="group/collapsible">
@@ -277,27 +282,31 @@ export function DynamicSidebar({ ...props }: React.ComponentProps<typeof Sidebar
                     <SidebarMenuButton>
                       <History className="size-4" />
                       Recent Conversations
+                      {state.loading && (
+                        <div className="ml-auto animate-spin rounded-full h-4 w-4 border-b-2 border-current" />
+                      )}
                       <Plus className="ml-auto group-data-[state=open]/collapsible:hidden" />
                       <Minus className="ml-auto group-data-[state=closed]/collapsible:hidden" />
                     </SidebarMenuButton>
                   </CollapsibleTrigger>
                   <CollapsibleContent>
                     <SidebarMenuSub>
-                      {state.conversations.slice(0, 10).map((conversation) => (
-                        <SidebarMenuSubItem key={conversation.conversationId}>
-                          <SidebarMenuSubButton
-                            asChild
-                            isActive={location.pathname === `/admin/conversations/${conversation.conversationId}`}
-                          >
-                            <Link to={`/admin/conversations/${conversation.conversationId}`} className="group">
+                      {state.conversations && state.conversations.length > 0 ? (
+                        state.conversations.slice(0, 10).map((conversation) => (
+                          <SidebarMenuSubItem key={conversation.conversationId}>
+                            <SidebarMenuSubButton
+                              onClick={() => handleConversationClick(conversation)}
+                              isActive={location.pathname === `/admin/conversations/${conversation.conversationId}`}
+                              className="group cursor-pointer"
+                            >
                               <MessageCircle className="size-4" />
                               <div className="flex-1 min-w-0">
                                 <div className="truncate text-sm font-medium">
                                   {conversation.title}
                                 </div>
-                                {/* <div className="text-xs text-muted-foreground">
-                                  {formatDate(conversation.updatedAt)}
-                                </div> */}
+                                <div className="text-xs text-muted-foreground">
+                                  {conversation.messages.length} messages
+                                </div>
                               </div>
                               <DropdownMenu>
                                 <DropdownMenuTrigger asChild>
@@ -305,6 +314,7 @@ export function DynamicSidebar({ ...props }: React.ComponentProps<typeof Sidebar
                                     variant="ghost"
                                     size="sm"
                                     className="h-6 w-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
+                                    onClick={(e) => e.stopPropagation()}
                                   >
                                     <MoreHorizontal className="size-3" />
                                   </Button>
@@ -326,10 +336,16 @@ export function DynamicSidebar({ ...props }: React.ComponentProps<typeof Sidebar
                                   </DropdownMenuItem>
                                 </DropdownMenuContent>
                               </DropdownMenu>
-                            </Link>
-                          </SidebarMenuSubButton>
+                            </SidebarMenuSubButton>
+                          </SidebarMenuSubItem>
+                        ))
+                      ) : (
+                        <SidebarMenuSubItem>
+                          <div className="px-4 py-2 text-sm text-muted-foreground">
+                            {state.loading ? 'Loading conversations...' : 'No conversations yet'}
+                          </div>
                         </SidebarMenuSubItem>
-                      ))}
+                      )}
                     </SidebarMenuSub>
                   </CollapsibleContent>
                 </SidebarMenuItem>
@@ -337,6 +353,7 @@ export function DynamicSidebar({ ...props }: React.ComponentProps<typeof Sidebar
             </SidebarMenu>
           </SidebarGroup>
         )}
+
       </SidebarContent>
 
       <SidebarRail />
