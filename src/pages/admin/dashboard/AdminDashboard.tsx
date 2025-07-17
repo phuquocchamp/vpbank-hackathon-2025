@@ -1,11 +1,12 @@
-
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Activity, Users, FileText, Shield, Terminal, AlertCircle, CheckCircle, Info, Clock, RefreshCw, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Activity, Users, FileText, Shield, Terminal, AlertCircle, CheckCircle, Info, Clock, RefreshCw, ChevronLeft, ChevronRight, TrendingUp, BarChart3 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
+import { ChartContainer, ChartTooltip } from '@/components/ui/chart';
+import { PieChart, Pie, Cell, AreaChart, Area, XAxis, YAxis, CartesianGrid } from 'recharts';
 
 // Interface for log data based on API response structure
 interface LogEntry {
@@ -188,6 +189,57 @@ const AdminDashboard = () => {
     setCurrentPage(1);
   };
 
+  // Helper functions for chart data processing
+  const getLogLevelChartData = () => {
+    const data = [
+      { name: 'Error', value: errorLogsCount, color: '#ef4444' },
+      { name: 'Warning', value: warnLogsCount, color: '#f59e0b' },
+      { name: 'Info', value: infoLogsCount, color: '#3b82f6' },
+      { name: 'System', value: systemLogsCount, color: '#6b7280' },
+    ].filter(item => item.value > 0);
+    
+    return data;
+  };
+
+  const getTimelineChartData = () => {
+    // Group logs by hour for the timeline
+    const timeMap = new Map();
+    
+    validLogs.forEach(log => {
+      const date = new Date(log.timestamp);
+      const hourKey = `${date.getDate()}/${date.getMonth() + 1} ${date.getHours()}h`;
+      
+      if (!timeMap.has(hourKey)) {
+        timeMap.set(hourKey, {
+          time: hourKey,
+          timestamp: date.getTime(),
+          total: 0,
+          error: 0,
+          warn: 0,
+          info: 0,
+          system: 0
+        });
+      }
+      
+      const entry = timeMap.get(hourKey);
+      entry.total++;
+      entry[log.logLevel.toLowerCase()]++;
+    });
+    
+    return Array.from(timeMap.values())
+      .sort((a, b) => a.timestamp - b.timestamp)
+      .slice(-12); // Last 12 hours
+  };
+
+  // Chart configs
+  const chartConfig = {
+    error: { label: "Error", color: "#ef4444" },
+    warn: { label: "Warning", color: "#f59e0b" },
+    info: { label: "Info", color: "#3b82f6" },
+    system: { label: "System", color: "#6b7280" },
+    total: { label: "Total", color: "#8b5cf6" },
+  };
+
   // Pagination component
   const PaginationControls = ({ filteredCount }: { filteredCount: number }) => {
     if (totalPages <= 1) return null;
@@ -236,6 +288,7 @@ const AdminDashboard = () => {
       </div>
     );
   };
+
   return (
     <div className="space-y-6">
       <div>
@@ -289,6 +342,240 @@ const AdminDashboard = () => {
         </Card>
       </div>
 
+      {/* Charts Section */}
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+        {/* Log Level Distribution */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <BarChart3 className="h-5 w-5" />
+              Log Distribution
+            </CardTitle>
+            <p className="text-sm text-muted-foreground">
+              System log breakdown
+            </p>
+          </CardHeader>
+          <CardContent>
+            <ChartContainer config={chartConfig} className="h-[250px]">
+              <PieChart>
+                <Pie
+                  data={getLogLevelChartData()}
+                  cx="50%"
+                  cy="50%"
+                  innerRadius={45}
+                  outerRadius={85}
+                  paddingAngle={3}
+                  dataKey="value"
+                  stroke="white"
+                  strokeWidth={2}
+                >
+                  {getLogLevelChartData().map((entry, index) => (
+                    <Cell 
+                      key={`cell-${index}`} 
+                      fill={entry.color}
+                      className="hover:opacity-80 transition-opacity duration-200"
+                    />
+                  ))}
+                </Pie>
+                <ChartTooltip 
+                  content={({ active, payload }) => {
+                    if (active && payload && payload.length) {
+                      const data = payload[0].payload;
+                      return (
+                        <div className="bg-white border border-gray-200 rounded-lg shadow-lg p-3">
+                          <p className="font-semibold text-gray-900">{data.name}</p>
+                          <p className="text-sm text-gray-600">Count: {data.value}</p>
+                          <p className="text-sm text-gray-600">
+                            {((data.value / validLogs.length) * 100).toFixed(1)}%
+                          </p>
+                        </div>
+                      );
+                    }
+                    return null;
+                  }}
+                />
+              </PieChart>
+            </ChartContainer>
+            
+            {/* Log Level Summary */}
+            <div className="mt-4 space-y-2">
+              {getLogLevelChartData().map((item) => (
+                <div key={item.name} className="flex items-center justify-between text-sm">
+                  <div className="flex items-center gap-2">
+                    <div 
+                      className="w-3 h-3 rounded-full" 
+                      style={{ backgroundColor: item.color }}
+                    />
+                    <span>{item.name}</span>
+                  </div>
+                  <span className="font-medium">{item.value}</span>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Log Stats Summary */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Activity className="h-5 w-5" />
+              Log Statistics
+            </CardTitle>
+            <p className="text-sm text-muted-foreground">
+              Real-time system metrics
+            </p>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <div className="w-2 h-2 bg-red-500 rounded-full"></div>
+                  <span className="text-sm">Critical Errors</span>
+                </div>
+                <span className="text-2xl font-bold text-red-600">{errorLogsCount}</span>
+              </div>
+              
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <div className="w-2 h-2 bg-yellow-500 rounded-full"></div>
+                  <span className="text-sm">Warnings</span>
+                </div>
+                <span className="text-2xl font-bold text-yellow-600">{warnLogsCount}</span>
+              </div>
+              
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                  <span className="text-sm">Info Messages</span>
+                </div>
+                <span className="text-2xl font-bold text-blue-600">{infoLogsCount}</span>
+              </div>
+              
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <div className="w-2 h-2 bg-gray-500 rounded-full"></div>
+                  <span className="text-sm">System Logs</span>
+                </div>
+                <span className="text-2xl font-bold text-gray-600">{systemLogsCount}</span>
+              </div>
+            </div>
+            
+            <div className="pt-4 border-t">
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-medium">Total Logs</span>
+                <span className="text-3xl font-bold text-purple-600">{validLogs.length}</span>
+              </div>
+              <div className="flex items-center justify-between mt-2">
+                <span className="text-xs text-muted-foreground">Error Rate</span>
+                <span className="text-sm font-medium text-red-500">
+                  {validLogs.length > 0 ? ((errorLogsCount / validLogs.length) * 100).toFixed(1) : 0}%
+                </span>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Logs Timeline */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <TrendingUp className="h-5 w-5" />
+              Activity Timeline
+            </CardTitle>
+            <p className="text-sm text-muted-foreground">
+              Last 12 hours trend
+            </p>
+          </CardHeader>
+          <CardContent>
+            <ChartContainer config={chartConfig} className="h-[250px]">
+              <AreaChart data={getTimelineChartData()}>
+                <defs>
+                  <linearGradient id="totalGradient" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#8b5cf6" stopOpacity={0.8}/>
+                    <stop offset="95%" stopColor="#8b5cf6" stopOpacity={0.1}/>
+                  </linearGradient>
+                  <linearGradient id="errorGradient" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#ef4444" stopOpacity={0.8}/>
+                    <stop offset="95%" stopColor="#ef4444" stopOpacity={0.1}/>
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" className="opacity-30" />
+                <XAxis 
+                  dataKey="time" 
+                  className="text-xs"
+                  tick={{ fill: '#6b7280', fontSize: 10 }}
+                />
+                <YAxis 
+                  className="text-xs"
+                  tick={{ fill: '#6b7280', fontSize: 10 }}
+                />
+                <ChartTooltip 
+                  content={({ active, payload, label }) => {
+                    if (active && payload && payload.length) {
+                      return (
+                        <div className="bg-white border border-gray-200 rounded-lg shadow-lg p-3">
+                          <p className="font-semibold text-gray-900 mb-2">{label}</p>
+                          {payload.map((entry, index) => (
+                            <p key={index} className="text-sm" style={{ color: entry.color }}>
+                              {entry.name}: {entry.value}
+                            </p>
+                          ))}
+                        </div>
+                      );
+                    }
+                    return null;
+                  }}
+                />
+                <Area
+                  type="monotone"
+                  dataKey="total"
+                  stackId="1"
+                  stroke="#8b5cf6"
+                  fill="url(#totalGradient)"
+                  strokeWidth={2}
+                  name="Total"
+                />
+                <Area
+                  type="monotone"
+                  dataKey="error"
+                  stackId="2"
+                  stroke="#ef4444"
+                  fill="url(#errorGradient)"
+                  strokeWidth={2}
+                  name="Errors"
+                />
+              </AreaChart>
+            </ChartContainer>
+          </CardContent>
+        </Card>
+                <Card>
+          <CardHeader>
+            <CardTitle>System Status</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-medium">API Server</span>
+                <span className="text-green-600 text-sm">Online</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-medium">Database</span>
+                <span className="text-green-600 text-sm">Connected</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-medium">Cache</span>
+                <span className="text-green-600 text-sm">Active</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-medium">Storage</span>
+                <span className="text-yellow-600 text-sm">80% Full</span>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <Card>
           <CardHeader>
@@ -321,31 +608,7 @@ const AdminDashboard = () => {
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>System Status</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <span className="text-sm font-medium">API Server</span>
-                <span className="text-green-600 text-sm">Online</span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-sm font-medium">Database</span>
-                <span className="text-green-600 text-sm">Connected</span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-sm font-medium">Cache</span>
-                <span className="text-green-600 text-sm">Active</span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-sm font-medium">Storage</span>
-                <span className="text-yellow-600 text-sm">80% Full</span>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+
       </div>
 
       {/* System Logs Section */}
