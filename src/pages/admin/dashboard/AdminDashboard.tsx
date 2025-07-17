@@ -2,7 +2,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Activity, Users, FileText, Shield, Terminal, AlertCircle, CheckCircle, Info, Clock, RefreshCw, ChevronLeft, ChevronRight, TrendingUp, BarChart3 } from 'lucide-react';
+import { Activity, Terminal, AlertCircle, CheckCircle, Info, Clock, RefreshCw, ChevronLeft, ChevronRight, TrendingUp, BarChart3 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { ChartContainer, ChartTooltip } from '@/components/ui/chart';
@@ -296,56 +296,10 @@ const AdminDashboard = () => {
         <p className="text-gray-600 mt-2">Welcome to the VPBank Admin Portal</p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Users</CardTitle>
-            <Users className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">1,234</div>
-            <p className="text-xs text-muted-foreground">+20.1% from last month</p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Active Sessions</CardTitle>
-            <Activity className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">89</div>
-            <p className="text-xs text-muted-foreground">+12.5% from last hour</p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">System Reports</CardTitle>
-            <FileText className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">45</div>
-            <p className="text-xs text-muted-foreground">+5 new reports</p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Security Alerts</CardTitle>
-            <Shield className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">3</div>
-            <p className="text-xs text-muted-foreground">2 resolved today</p>
-          </CardContent>
-        </Card>
-      </div>
-
       {/* Charts Section */}
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 lg:gap-6">
         {/* Log Level Distribution */}
-        <Card>
+        <Card className="md:col-span-1">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <BarChart3 className="h-5 w-5" />
@@ -356,14 +310,14 @@ const AdminDashboard = () => {
             </p>
           </CardHeader>
           <CardContent>
-            <ChartContainer config={chartConfig} className="h-[250px]">
+            <ChartContainer config={chartConfig} className="aspect-square w-full max-h-[280px]">
               <PieChart>
                 <Pie
                   data={getLogLevelChartData()}
                   cx="50%"
                   cy="50%"
-                  innerRadius={45}
-                  outerRadius={85}
+                  innerRadius="40%"
+                  outerRadius="75%"
                   paddingAngle={3}
                   dataKey="value"
                   stroke="white"
@@ -398,17 +352,17 @@ const AdminDashboard = () => {
             </ChartContainer>
             
             {/* Log Level Summary */}
-            <div className="mt-4 space-y-2">
+            <div className="mt-3 sm:mt-4 space-y-1.5 sm:space-y-2">
               {getLogLevelChartData().map((item) => (
-                <div key={item.name} className="flex items-center justify-between text-sm">
+                <div key={item.name} className="flex items-center justify-between text-xs sm:text-sm">
                   <div className="flex items-center gap-2">
                     <div 
-                      className="w-3 h-3 rounded-full" 
+                      className="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full flex-shrink-0" 
                       style={{ backgroundColor: item.color }}
                     />
-                    <span>{item.name}</span>
+                    <span className="truncate">{item.name}</span>
                   </div>
-                  <span className="font-medium">{item.value}</span>
+                  <span className="font-medium text-xs sm:text-sm">{item.value}</span>
                 </div>
               ))}
             </div>
@@ -416,7 +370,7 @@ const AdminDashboard = () => {
         </Card>
 
         {/* Log Stats Summary */}
-        <Card>
+        <Card className="md:col-span-1">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Activity className="h-5 w-5" />
@@ -426,49 +380,49 @@ const AdminDashboard = () => {
               Real-time system metrics
             </p>
           </CardHeader>
-          <CardContent className="space-y-6">
-            <div className="space-y-4">
+          <CardContent className="space-y-3 sm:space-y-4 lg:space-y-6">
+            <div className="space-y-2 sm:space-y-3 lg:space-y-4">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <div className="w-2 h-2 bg-red-500 rounded-full"></div>
-                  <span className="text-sm">Critical Errors</span>
+                  <div className="w-2 h-2 bg-red-500 rounded-full flex-shrink-0"></div>
+                  <span className="text-xs sm:text-sm">Critical Errors</span>
                 </div>
-                <span className="text-2xl font-bold text-red-600">{errorLogsCount}</span>
+                <span className="text-lg sm:text-xl lg:text-2xl font-bold text-red-600">{errorLogsCount}</span>
               </div>
               
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <div className="w-2 h-2 bg-yellow-500 rounded-full"></div>
-                  <span className="text-sm">Warnings</span>
+                  <div className="w-2 h-2 bg-yellow-500 rounded-full flex-shrink-0"></div>
+                  <span className="text-xs sm:text-sm">Warnings</span>
                 </div>
-                <span className="text-2xl font-bold text-yellow-600">{warnLogsCount}</span>
+                <span className="text-lg sm:text-xl lg:text-2xl font-bold text-yellow-600">{warnLogsCount}</span>
               </div>
               
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-                  <span className="text-sm">Info Messages</span>
+                  <div className="w-2 h-2 bg-blue-500 rounded-full flex-shrink-0"></div>
+                  <span className="text-xs sm:text-sm">Info Messages</span>
                 </div>
-                <span className="text-2xl font-bold text-blue-600">{infoLogsCount}</span>
+                <span className="text-lg sm:text-xl lg:text-2xl font-bold text-blue-600">{infoLogsCount}</span>
               </div>
               
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <div className="w-2 h-2 bg-gray-500 rounded-full"></div>
-                  <span className="text-sm">System Logs</span>
+                  <div className="w-2 h-2 bg-gray-500 rounded-full flex-shrink-0"></div>
+                  <span className="text-xs sm:text-sm">System Logs</span>
                 </div>
-                <span className="text-2xl font-bold text-gray-600">{systemLogsCount}</span>
+                <span className="text-lg sm:text-xl lg:text-2xl font-bold text-gray-600">{systemLogsCount}</span>
               </div>
             </div>
             
-            <div className="pt-4 border-t">
+            <div className="pt-3 sm:pt-4 border-t">
               <div className="flex items-center justify-between">
-                <span className="text-sm font-medium">Total Logs</span>
-                <span className="text-3xl font-bold text-purple-600">{validLogs.length}</span>
+                <span className="text-xs sm:text-sm font-medium">Total Logs</span>
+                <span className="text-xl sm:text-2xl lg:text-3xl font-bold text-purple-600">{validLogs.length}</span>
               </div>
               <div className="flex items-center justify-between mt-2">
                 <span className="text-xs text-muted-foreground">Error Rate</span>
-                <span className="text-sm font-medium text-red-500">
+                <span className="text-xs sm:text-sm font-medium text-red-500">
                   {validLogs.length > 0 ? ((errorLogsCount / validLogs.length) * 100).toFixed(1) : 0}%
                 </span>
               </div>
@@ -477,7 +431,7 @@ const AdminDashboard = () => {
         </Card>
 
         {/* Logs Timeline */}
-        <Card>
+        <Card className="md:col-span-2 xl:col-span-2">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <TrendingUp className="h-5 w-5" />
@@ -488,7 +442,7 @@ const AdminDashboard = () => {
             </p>
           </CardHeader>
           <CardContent>
-            <ChartContainer config={chartConfig} className="h-[250px]">
+            <ChartContainer config={chartConfig} className="aspect-[4/3] w-full max-h-[280px]">
               <AreaChart data={getTimelineChartData()}>
                 <defs>
                   <linearGradient id="totalGradient" x1="0" y1="0" x2="0" y2="1">
@@ -504,11 +458,14 @@ const AdminDashboard = () => {
                 <XAxis 
                   dataKey="time" 
                   className="text-xs"
-                  tick={{ fill: '#6b7280', fontSize: 10 }}
+                  tick={{ fill: '#6b7280', fontSize: 9 }}
+                  interval="preserveStartEnd"
+                  minTickGap={5}
                 />
                 <YAxis 
                   className="text-xs"
-                  tick={{ fill: '#6b7280', fontSize: 10 }}
+                  tick={{ fill: '#6b7280', fontSize: 9 }}
+                  width={25}
                 />
                 <ChartTooltip 
                   content={({ active, payload, label }) => {
@@ -549,66 +506,6 @@ const AdminDashboard = () => {
             </ChartContainer>
           </CardContent>
         </Card>
-                <Card>
-          <CardHeader>
-            <CardTitle>System Status</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <span className="text-sm font-medium">API Server</span>
-                <span className="text-green-600 text-sm">Online</span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-sm font-medium">Database</span>
-                <span className="text-green-600 text-sm">Connected</span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-sm font-medium">Cache</span>
-                <span className="text-green-600 text-sm">Active</span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-sm font-medium">Storage</span>
-                <span className="text-yellow-600 text-sm">80% Full</span>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Card>
-          <CardHeader>
-            <CardTitle>Recent Activity</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              <div className="flex items-center">
-                <div className="w-2 h-2 bg-blue-500 rounded-full mr-3"></div>
-                <div className="flex-1">
-                  <p className="text-sm font-medium">User login: john.doe@vpbank.com</p>
-                  <p className="text-xs text-gray-500">2 minutes ago</p>
-                </div>
-              </div>
-              <div className="flex items-center">
-                <div className="w-2 h-2 bg-green-500 rounded-full mr-3"></div>
-                <div className="flex-1">
-                  <p className="text-sm font-medium">System backup completed</p>
-                  <p className="text-xs text-gray-500">15 minutes ago</p>
-                </div>
-              </div>
-              <div className="flex items-center">
-                <div className="w-2 h-2 bg-yellow-500 rounded-full mr-3"></div>
-                <div className="flex-1">
-                  <p className="text-sm font-medium">New user registration</p>
-                  <p className="text-xs text-gray-500">1 hour ago</p>
-                </div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-
       </div>
 
       {/* System Logs Section */}
