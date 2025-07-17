@@ -1,23 +1,21 @@
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import ComingSoon from '@/components/common/ComingSoon';
 
 const Analytics = () => {
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold tracking-tight">Analytics</h1>
-      </div>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Analytics Dashboard</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <p className="text-muted-foreground">
-            Analytics features will be implemented here.
-          </p>
-        </CardContent>
-      </Card>
-    </div>
+    <ComingSoon
+      title="Smart Analytics"
+      subtitle="Intelligence-driven insights are loading"
+      description="We're developing powerful analytics tools that will help you understand your financial patterns, predict trends, and make smarter decisions."
+      features={[
+        "Interactive spending analysis",
+        "Predictive financial modeling",
+        "Custom analytics reports",
+        "Trend visualization charts",
+        "Automated insights and alerts",
+        "Comparative benchmarking"
+      ]}
+      expectedDate="Q2 2025"
+    />
   );
 };
 
