@@ -40,27 +40,49 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     const storedIdToken = localStorage.getItem('vpbank_id_token');
     const storedCustomToken = localStorage.getItem('vpbank_custom_token');
-    if (storedIdToken && storedCustomToken) {
+
+    console.log('AuthContext: Checking stored tokens', {
+      hasIdToken: !!storedIdToken,
+      hasCustomToken: !!storedCustomToken
+    });
+
+    if (storedIdToken) {
       try {
         const decodedIdToken = jwtDecode(storedIdToken) as any;
-        const decodedCustomToken = jwtDecode(storedCustomToken) as any;
+        console.log('AuthContext: Decoded ID token', decodedIdToken);
 
         if (decodedIdToken.exp * 1000 > Date.now()) {
+          let decodedCustomToken = {};
+
+          if (storedCustomToken) {
+            try {
+              decodedCustomToken = jwtDecode(storedCustomToken) as any;
+              console.log('AuthContext: Decoded custom token', decodedCustomToken);
+            } catch (error) {
+              console.error('AuthContext: Failed to decode custom token', error);
+            }
+          }
+
           setToken(storedIdToken);
           setCustomToken(storedCustomToken);
-          setUser({
+
+          const userData = {
             id: decodedIdToken.sub,
             email: decodedIdToken.email,
-            role: decodedCustomToken.role || 'USER', // Lấy role từ token custom
+            role: decodedCustomToken.role || 'USER',
             name: decodedIdToken.name || undefined,
-            co_code_ld: decodedCustomToken.co_code_ld || undefined,
-          });
+            co_code_ld: decodedCustomToken.co_code_ld || "",
+          };
+
+          console.log('AuthContext: Setting user data', userData);
+          setUser(userData);
         } else {
+          console.log('AuthContext: Tokens expired, removing from storage');
           localStorage.removeItem('vpbank_id_token');
           localStorage.removeItem('vpbank_custom_token');
         }
       } catch (error) {
-        console.error('Invalid token:', error);
+        console.error('AuthContext: Invalid token:', error);
         localStorage.removeItem('vpbank_id_token');
         localStorage.removeItem('vpbank_custom_token');
       }
@@ -69,25 +91,42 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   const login = (idToken: string, customToken: string) => {
+    console.log('AuthContext: Login called', { hasIdToken: !!idToken, hasCustomToken: !!customToken });
+
     try {
       const decodedIdToken = jwtDecode(idToken) as any;
-      const decodedCustomToken = customToken ? jwtDecode(customToken) as any : {};
+      console.log('AuthContext: Login - Decoded ID token', decodedIdToken);
+
+      let decodedCustomToken = {};
+      if (customToken) {
+        try {
+          decodedCustomToken = jwtDecode(customToken) as any;
+          console.log('AuthContext: Login - Decoded custom token', decodedCustomToken);
+        } catch (error) {
+          console.error('AuthContext: Failed to decode custom token during login', error);
+        }
+      }
 
       setToken(idToken);
       setCustomToken(customToken || null);
-      setUser({
+
+      const userData = {
         id: decodedIdToken.sub,
         email: decodedIdToken.email,
         role: decodedCustomToken.role || 'USER',
         name: decodedIdToken.name || undefined,
-        co_code_ld: decodedCustomToken.co_code_ld || undefined,
-      });
+        co_code_ld: decodedCustomToken.co_code_ld || "",
+      };
+
+      console.log('AuthContext: Login - Setting user data', userData);
+      setUser(userData);
 
       localStorage.setItem('vpbank_id_token', idToken);
-      localStorage.setItem('vpbank_custom_token', customToken);
-      if (customToken) localStorage.setItem('vpbank_custom_token', customToken);
+      if (customToken) {
+        localStorage.setItem('vpbank_custom_token', customToken);
+      }
     } catch (error) {
-      console.error('Failed to decode token:', error);
+      console.error('AuthContext: Failed to decode token during login:', error);
     }
   };
 
