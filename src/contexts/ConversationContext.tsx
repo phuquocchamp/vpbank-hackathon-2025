@@ -1,6 +1,7 @@
 import { createContext, useCallback, useContext, useReducer } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from './AuthContext';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 interface Message {
@@ -120,14 +121,30 @@ const ConversationContext = createContext<ConversationContextType | undefined>(u
 
 export const ConversationProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [state, dispatch] = useReducer(conversationReducer, initialState);
+  const { user, isLoading: authLoading } = useAuth();
+
+  const userId = user?.id;
+  const co_code_ld = user?.co_code_ld;
+
+  console.log('ConversationProvider user:', userId, co_code_ld);
+
 
   const createNewConversation = useCallback(async (): Promise<Conversation> => {
     dispatch({ type: 'SET_LOADING', payload: true });
     try {
+      // Wait for auth to finish loading
+      if (authLoading) {
+        throw new Error('Authentication still loading');
+      }
+
+      if (!user || !user.id) {
+        throw new Error('User not authenticated');
+      }
       const newConversation = {
         conversationId: uuidv4(),
         title: 'New Chat',
-        userId: 'admin',
+        userId: user.id,
+        co_code_ld: user.co_code_ld
       };
 
       const response = await fetch(`${API_BASE_URL}/admin/conversations`, {
@@ -148,7 +165,7 @@ export const ConversationProvider: React.FC<{ children: React.ReactNode }> = ({ 
     } finally {
       dispatch({ type: 'SET_LOADING', payload: false });
     }
-  }, []);
+  }, [user, authLoading]);
 
   const setCurrentConversation = useCallback((conversation: Conversation | null) => {
     if (conversation) {
@@ -324,9 +341,20 @@ export const useConversation = () => {
 export const useConversationWithNavigation = () => {
   const conversation = useConversation();
   const navigate = useNavigate();
+  const { user, isLoading: authLoading } = useAuth();
 
   const createNewConversationAndNavigate = useCallback(async () => {
     try {
+      if (authLoading) {
+        console.log('Still loading authentication...');
+        return;
+      }
+
+      if (!user) {
+        console.error('User not authenticated');
+        throw new Error('User not authenticated');
+      }
+
       const newConversation = await conversation.createNewConversation();
       // Navigate using the ID from API response
       navigate(`/admin/conversations/${newConversation.conversationId}`);
@@ -335,7 +363,7 @@ export const useConversationWithNavigation = () => {
       console.error('Failed to create and navigate to new conversation:', error);
       throw error;
     }
-  }, [conversation.createNewConversation, navigate]);
+  }, [conversation.createNewConversation, navigate, user, authLoading]);
 
   return {
     ...conversation,
