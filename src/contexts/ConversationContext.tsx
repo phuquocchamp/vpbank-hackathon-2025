@@ -226,9 +226,15 @@ export const ConversationProvider: React.FC<{ children: React.ReactNode }> = ({ 
     dispatch({ type: 'ADD_MESSAGE', payload: { conversationId, message: userMessage } });
 
     try {
+      // Get the vpbank_id_token from localStorage
+      const vpbankIdToken = localStorage.getItem('vpbank_id_token');
+      
       const response = await fetch(`${API_BASE_URL}/admin/conversations/${conversationId}/messages`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${vpbankIdToken}` // Include the token in the request headers
+        },
         body: JSON.stringify({ content: content }),
       });
 

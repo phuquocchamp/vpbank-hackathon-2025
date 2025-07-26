@@ -64,11 +64,15 @@ const AdminConversation = () => {
     setExecutingQueries(prev => ({ ...prev, [queryKey]: true }));
 
     try {
+      // Get the vpbank_id_token from localStorage
+      const vpbankIdToken = localStorage.getItem('vpbank_id_token');
+      
       // const hostname = window.location.hostname;
       const response = await fetch(`${BASE_URL}/chatbot/execute_sql`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${vpbankIdToken}`,
         },
         body: JSON.stringify({
           query: query,
@@ -267,7 +271,7 @@ const AdminConversation = () => {
           </div>
         )
         }
-      </div >
+      </div>
     );
   };
 
