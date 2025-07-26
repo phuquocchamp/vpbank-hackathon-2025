@@ -235,7 +235,7 @@ export const ConversationProvider: React.FC<{ children: React.ReactNode }> = ({ 
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${vpbankIdToken}` // Include the token in the request headers
         },
-        body: JSON.stringify({ content: content }),
+        body: JSON.stringify({ content: content, idToken: vpbankIdToken }),
       });
 
       if (!response.ok) throw new Error('Failed to send message');
