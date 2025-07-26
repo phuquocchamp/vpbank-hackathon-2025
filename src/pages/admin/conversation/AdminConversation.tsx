@@ -267,7 +267,7 @@ const AdminConversation = () => {
           </div>
         )
         }
-      </div >
+      </div>
     );
   };
 
