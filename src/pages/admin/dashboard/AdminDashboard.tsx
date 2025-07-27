@@ -1,27 +1,29 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Activity, Terminal, AlertCircle, CheckCircle, Info, Clock, RefreshCw, ChevronLeft, ChevronRight, TrendingUp, BarChart3 } from 'lucide-react';
+import { Activity, Terminal, AlertCircle, CheckCircle, Clock, RefreshCw, ChevronLeft, ChevronRight, TrendingUp, BarChart3 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { ChartContainer, ChartTooltip } from '@/components/ui/chart';
 import { PieChart, Pie, Cell, AreaChart, Area, XAxis, YAxis, CartesianGrid, BarChart, Bar } from 'recharts';
 
-// Interface for log data based on API response structure
+// Interface for log data based on new API response structure
 interface LogEntry {
-  timestamp: string;
-  logLevel: string;
-  component: string;
-  traceId: string;
+  time: string;
+  user_name: string;
+  log_level: string;
   message: string;
+  service_name: string;
+  date: string;
 }
 
 interface LogData {
-  status: number;
-  num_log: number;
-  num_error: number;
-  logs: LogEntry[];
+  statusCode: number;
+  headers: {
+    "Content-Type": string;
+    "Access-Control-Allow-Origin": string;
+  };
+  body: LogEntry[];
 }
 
 interface BillingEntry {
@@ -52,29 +54,99 @@ const AdminDashboard = () => {
     setLogError(null);
     
     try {
-      const response = await fetch(`${BASE_URL}/chatbot/get-log`, {
+      // Get the vpbank_id_token from localStorage or sessionStorage
+      const vpbankToken = localStorage.getItem('vpbank_id_token') || sessionStorage.getItem('vpbank_id_token');
+      
+      if (!vpbankToken) {
+        throw new Error('Authentication token not found. Please login again.');
+      }
+
+      const response = await fetch(`${BASE_URL}/admin/log`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${vpbankToken}`,
         },
       });
 
       if (!response.ok) {
+        if (response.status === 401) {
+          throw new Error('Authentication failed. Please login again.');
+        }
         throw new Error(`HTTP error! status: ${response.status}`);
       }
 
       const result = await response.json();
       
-      // API response có cấu trúc { body: { status, num_log, num_error, logs } }
-      if (result.body) {
-        setLogData(result.body);
+      // Parse the body string as JSON if it's a string
+      let parsedBody;
+      if (typeof result.body === 'string') {
+        parsedBody = JSON.parse(result.body);
       } else {
-        // Fallback nếu response không có body wrapper
-        setLogData(result);
+        parsedBody = result.body;
       }
+      
+      const processedResult: LogData = {
+        statusCode: result.statusCode,
+        headers: result.headers,
+        body: parsedBody
+      };
+      
+      setLogData(processedResult);
     } catch (error) {
       console.error('Failed to fetch logs:', error);
       setLogError(error instanceof Error ? error.message : 'Failed to fetch logs');
+      
+      // Set mock data as fallback for development
+      setLogData({
+        statusCode: 200,
+        headers: {
+          "Content-Type": "application/json",
+          "Access-Control-Allow-Origin": "*"
+        },
+        body: [
+          {
+            time: "19:11:04",
+            user_name: "adminuser@gmail.com",
+            log_level: "INFO",
+            message: "Đã nhận phản hồi từ Agent thành công",
+            service_name: "lambda_function",
+            date: "27-07-2025"
+          },
+          {
+            time: "17:16:45",
+            user_name: "adminuser@gmail.com",
+            log_level: "INFO",
+            message: "User authentication successful",
+            service_name: "auth_service",
+            date: "27-07-2025"
+          },
+          {
+            time: "16:52:56",
+            user_name: "dump_user",
+            log_level: "ERROR",
+            message: "Database connection timeout after 30 seconds",
+            service_name: "api_gateway",
+            date: "27-07-2025"
+          },
+          {
+            time: "16:51:35",
+            user_name: "dump_user",
+            log_level: "INFO",
+            message: "Request processed successfully",
+            service_name: "lambda_function",
+            date: "27-07-2025"
+          },
+          {
+            time: "16:50:12",
+            user_name: "admin@vpbank.com",
+            log_level: "ERROR",
+            message: "Failed to connect to external API endpoint",
+            service_name: "integration_service",
+            date: "27-07-2025"
+          }
+        ]
+      });
     } finally {
       setIsLoadingLogs(false);
     }
@@ -86,14 +158,25 @@ const AdminDashboard = () => {
     setBillingError(null);
     
     try {
+      // Get the vpbank_id_token from localStorage or sessionStorage
+      const vpbankToken = localStorage.getItem('vpbank_id_token') || sessionStorage.getItem('vpbank_id_token');
+      
+      if (!vpbankToken) {
+        throw new Error('Authentication token not found. Please login again.');
+      }
+
       const response = await fetch(`${BASE_URL}/billing`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${vpbankToken}`,
         },
       });
 
       if (!response.ok) {
+        if (response.status === 401) {
+          throw new Error('Authentication failed. Please login again.');
+        }
         throw new Error(`HTTP error! status: ${response.status}`);
       }
 
@@ -162,67 +245,25 @@ const AdminDashboard = () => {
     { date: "2025-07-17", cost: 13.6 }
   ];
 
-  // Mock data dựa trên response từ BE (JSON từ ảnh) - fallback khi không có API
-  const mockLogData: LogData = {
-    status: 200,
-    num_log: 154,
-    num_error: 4,
-    logs: [
-      {
-        timestamp: "2025-07-17T10:19:52.7072",
-        logLevel: "SYSTEM",
-        component: "LambdaRuntime",
-        traceId: "0f1fb249-1463-455c-a901-0736b573c808",
-        message: "END RequestId: 0f1fb249-1463-455c-a901-0736b573c808"
-      },
-      {
-        timestamp: "2025-07-17T10:19:52.7072",
-        logLevel: "SYSTEM",
-        component: "LambdaRuntime",
-        traceId: "0f1fb249-1463-455c-a901-0736b573c808",
-        message: "REPORT RequestId: 0f1fb249-1463-455c-a901-0736b573c808\\tDuration: 7959.91 ms\\tBi"
-      },
-      {
-        timestamp: "2025-07-17T10:19:52.7052",
-        logLevel: "ERROR",
-        component: "Application",
-        traceId: "0f1fb249-1463-455c-a901-0736b573c808",
-        message: "Database connection failed - timeout after 30 seconds"
-      },
-      {
-        timestamp: "2025-07-17T10:19:51.2341",
-        logLevel: "INFO",
-        component: "UserService",
-        traceId: "0f1fb249-1463-455c-a901-0736b573c809",
-        message: "User authentication successful for user ID: 12345"
-      },
-      {
-        timestamp: "2025-07-17T10:19:50.1234",
-        logLevel: "WARN",
-        component: "ApiGateway",
-        traceId: "0f1fb249-1463-455c-a901-0736b573c810",
-        message: "Rate limit approaching - 90% of threshold reached"
-      }
-    ]
-  };
-
   const getLogLevelBadge = (level: string) => {
     switch (level.toLowerCase()) {
       case 'error':
         return <Badge variant="destructive" className="text-xs"><AlertCircle className="size-3 mr-1" />ERROR</Badge>;
-      case 'warn':
-        return <Badge variant="outline" className="text-xs text-yellow-600 border-yellow-600"><Info className="size-3 mr-1" />WARN</Badge>;
       case 'info':
         return <Badge variant="outline" className="text-xs text-blue-600 border-blue-600"><CheckCircle className="size-3 mr-1" />INFO</Badge>;
-      case 'system':
-        return <Badge variant="secondary" className="text-xs"><Terminal className="size-3 mr-1" />SYSTEM</Badge>;
       default:
         return <Badge variant="outline" className="text-xs">{level}</Badge>;
     }
   };
 
-  const formatTimestamp = (timestamp: string) => {
-    return new Date(timestamp).toLocaleString('vi-VN', {
+  const formatTimestamp = (date: string, time: string) => {
+    // Parse the date string (DD-MM-YYYY) and time string (HH:MM:SS)
+    const [day, month, year] = date.split('-');
+    const [hour, minute, second] = time.split(':');
+    
+    const dateObj = new Date(parseInt(year), parseInt(month) - 1, parseInt(day), parseInt(hour), parseInt(minute), parseInt(second || '0'));
+    
+    return dateObj.toLocaleString('vi-VN', {
       day: '2-digit',
       month: '2-digit',
       year: 'numeric',
@@ -232,30 +273,24 @@ const AdminDashboard = () => {
     });
   };
 
-  // Only use data if we have successfully loaded it or if we're showing mock data
-  const currentLogData = logData || (logError ? null : mockLogData);
+  // Only use data if we have successfully loaded it from API
+  const currentLogData = logData;
   
-  // Ensure logs array is always valid - only if we have valid data
-  const validLogs = currentLogData && Array.isArray(currentLogData.logs) ? currentLogData.logs : [];
+  // Ensure logs array is always valid - only if we have valid data from API
+  const validLogs = currentLogData && Array.isArray(currentLogData.body) ? currentLogData.body : [];
   
   // Calculate counts for each tab - only if we have valid data
   const allLogsCount = validLogs.length;
-  const errorLogsCount = validLogs.filter(log => log.logLevel.toLowerCase() === 'error').length;
-  const warnLogsCount = validLogs.filter(log => log.logLevel.toLowerCase() === 'warn').length;
-  const infoLogsCount = validLogs.filter(log => log.logLevel.toLowerCase() === 'info').length;
-  const systemLogsCount = validLogs.filter(log => log.logLevel.toLowerCase() === 'system').length;
+  const errorLogsCount = validLogs.filter((log: LogEntry) => log.log_level.toLowerCase() === 'error').length;
+  const infoLogsCount = validLogs.filter((log: LogEntry) => log.log_level.toLowerCase() === 'info').length;
 
   // Get filtered logs based on active tab
   const getFilteredLogs = (tab: string) => {
     switch (tab) {
       case 'error':
-        return validLogs.filter(log => log.logLevel.toLowerCase() === 'error');
-      case 'warn':
-        return validLogs.filter(log => log.logLevel.toLowerCase() === 'warn');
+        return validLogs.filter((log: LogEntry) => log.log_level.toLowerCase() === 'error');
       case 'info':
-        return validLogs.filter(log => log.logLevel.toLowerCase() === 'info');
-      case 'system':
-        return validLogs.filter(log => log.logLevel.toLowerCase() === 'system');
+        return validLogs.filter((log: LogEntry) => log.log_level.toLowerCase() === 'info');
       default:
         return validLogs;
     }
@@ -280,9 +315,7 @@ const AdminDashboard = () => {
   const getLogLevelChartData = () => {
     const data = [
       { name: 'Error', value: errorLogsCount, color: '#ef4444' },
-      { name: 'Warning', value: warnLogsCount, color: '#f59e0b' },
       { name: 'Info', value: infoLogsCount, color: '#3b82f6' },
-      { name: 'System', value: systemLogsCount, color: '#6b7280' },
     ].filter(item => item.value > 0);
     
     return data;
@@ -309,25 +342,30 @@ const AdminDashboard = () => {
     // Group logs by hour for the timeline
     const timeMap = new Map();
     
-    validLogs.forEach(log => {
-      const date = new Date(log.timestamp);
-      const hourKey = `${date.getDate()}/${date.getMonth() + 1} ${date.getHours()}h`;
+    validLogs.forEach((log: LogEntry) => {
+      // Parse the date and time from the new format
+      const [day, month, year] = log.date.split('-');
+      const [hour] = log.time.split(':');
+      const hourKey = `${day}/${month} ${hour}h`;
+      
+      const dateObj = new Date(parseInt(year), parseInt(month) - 1, parseInt(day), parseInt(hour));
       
       if (!timeMap.has(hourKey)) {
         timeMap.set(hourKey, {
           time: hourKey,
-          timestamp: date.getTime(),
+          timestamp: dateObj.getTime(),
           total: 0,
           error: 0,
-          warn: 0,
-          info: 0,
-          system: 0
+          info: 0
         });
       }
       
       const entry = timeMap.get(hourKey);
       entry.total++;
-      entry[log.logLevel.toLowerCase()]++;
+      const logLevel = log.log_level.toLowerCase();
+      if (logLevel === 'error' || logLevel === 'info') {
+        entry[logLevel]++;
+      }
     });
     
     return Array.from(timeMap.values())
@@ -338,9 +376,7 @@ const AdminDashboard = () => {
   // Chart configs
   const chartConfig = {
     error: { label: "Error", color: "#ef4444" },
-    warn: { label: "Warning", color: "#f59e0b" },
     info: { label: "Info", color: "#3b82f6" },
-    system: { label: "System", color: "#6b7280" },
     total: { label: "Total", color: "#8b5cf6" },
   };
 
@@ -496,26 +532,10 @@ const AdminDashboard = () => {
               
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <div className="w-2 h-2 bg-yellow-500 rounded-full flex-shrink-0"></div>
-                  <span className="text-xs sm:text-sm">Warnings</span>
-                </div>
-                <span className="text-lg sm:text-xl lg:text-2xl font-bold text-yellow-600">{warnLogsCount}</span>
-              </div>
-              
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
                   <div className="w-2 h-2 bg-blue-500 rounded-full flex-shrink-0"></div>
                   <span className="text-xs sm:text-sm">Info Messages</span>
                 </div>
                 <span className="text-lg sm:text-xl lg:text-2xl font-bold text-blue-600">{infoLogsCount}</span>
-              </div>
-              
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <div className="w-2 h-2 bg-gray-500 rounded-full flex-shrink-0"></div>
-                  <span className="text-xs sm:text-sm">System Logs</span>
-                </div>
-                <span className="text-lg sm:text-xl lg:text-2xl font-bold text-gray-600">{systemLogsCount}</span>
               </div>
             </div>
             
@@ -556,6 +576,10 @@ const AdminDashboard = () => {
                   <linearGradient id="errorGradient" x1="0" y1="0" x2="0" y2="1">
                     <stop offset="5%" stopColor="#ef4444" stopOpacity={0.8}/>
                     <stop offset="95%" stopColor="#ef4444" stopOpacity={0.1}/>
+                  </linearGradient>
+                  <linearGradient id="infoGradient" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.8}/>
+                    <stop offset="95%" stopColor="#3b82f6" stopOpacity={0.1}/>
                   </linearGradient>
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" className="opacity-30" />
@@ -605,6 +629,15 @@ const AdminDashboard = () => {
                   fill="url(#errorGradient)"
                   strokeWidth={2}
                   name="Errors"
+                />
+                <Area
+                  type="monotone"
+                  dataKey="info"
+                  stackId="3"
+                  stroke="#3b82f6"
+                  fill="url(#infoGradient)"
+                  strokeWidth={2}
+                  name="Info"
                 />
               </AreaChart>
             </ChartContainer>
@@ -722,11 +755,11 @@ const AdminDashboard = () => {
             <Terminal className="h-5 w-5" />
             System Logs
             <Badge variant="outline" className="ml-2">
-              {currentLogData?.num_log || allLogsCount} total
+              {allLogsCount} total
             </Badge>
-            {(currentLogData?.num_error || errorLogsCount) > 0 && (
+            {errorLogsCount > 0 && (
               <Badge variant="destructive" className="ml-2">
-                {currentLogData?.num_error || errorLogsCount} errors
+                {errorLogsCount} errors
               </Badge>
             )}
             <Button
@@ -777,188 +810,169 @@ const AdminDashboard = () => {
             </div>
           ) : (
           <Tabs defaultValue="all" value={activeTab} onValueChange={handleTabChange} className="w-full">
-            <TabsList className="grid w-full grid-cols-5">
+            <TabsList className="grid w-full grid-cols-3">
               <TabsTrigger value="all">All Logs ({allLogsCount})</TabsTrigger>
               <TabsTrigger value="error">Errors ({errorLogsCount})</TabsTrigger>
-              <TabsTrigger value="warn">Warnings ({warnLogsCount})</TabsTrigger>
               <TabsTrigger value="info">Info ({infoLogsCount})</TabsTrigger>
-              <TabsTrigger value="system">System ({systemLogsCount})</TabsTrigger>
             </TabsList>
             
             <TabsContent value="all" className="space-y-4">
-              <div className="rounded-md border">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead className="w-[180px]">
-                        <Clock className="size-4 inline mr-2" />
-                        Timestamp
-                      </TableHead>
-                      <TableHead className="w-[100px]">Level</TableHead>
-                      <TableHead className="w-[120px]">Component</TableHead>
-                      <TableHead className="w-[200px]">Trace ID</TableHead>
-                      <TableHead>Message</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {currentLogs.map((log: LogEntry, index: number) => (
-                      <TableRow key={index}>
-                        <TableCell className="font-mono text-xs">
-                          {formatTimestamp(log.timestamp)}
-                        </TableCell>
-                        <TableCell>
-                          {getLogLevelBadge(log.logLevel)}
-                        </TableCell>
-                        <TableCell className="font-medium text-sm">
-                          {log.component || 'Unknown'}
-                        </TableCell>
-                        <TableCell className="font-mono text-xs text-muted-foreground">
-                          {log.traceId?.slice(0, 8) || 'N/A'}...
-                        </TableCell>
-                        <TableCell className="text-sm">
-                          {log.message || 'No message'}
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
+              <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
+                {/* Table Headers */}
+                <div className="grid grid-cols-12 gap-4 px-6 py-4 bg-gray-50 border-b text-sm font-medium text-gray-700">
+                  <div className="col-span-3 flex items-center gap-2">
+                    <Clock className="h-4 w-4" />
+                    Timestamp
+                  </div>
+                  <div className="col-span-1">Level</div>
+                  <div className="col-span-3">User</div>
+                  <div className="col-span-2">Service</div>
+                  <div className="col-span-3">Message</div>
+                </div>
+                
+                {/* Table Body */}
+                <div className="divide-y divide-gray-100">
+                  {currentLogs.length === 0 ? (
+                    <div className="flex items-center justify-center py-16">
+                      <div className="text-center">
+                        <Terminal className="h-12 w-12 text-gray-300 mx-auto mb-4" />
+                        <p className="text-gray-500 font-medium text-lg">No logs found</p>
+                        <p className="text-gray-400 text-sm">There are no logs to display for this filter</p>
+                      </div>
+                    </div>
+                  ) : (
+                    currentLogs.map((log: LogEntry, index: number) => (
+                      <div key={index} className="grid grid-cols-12 gap-4 px-6 py-4 hover:bg-gray-50 transition-colors">
+                        <div className="col-span-3 font-mono text-xs text-gray-600 flex items-center">
+                          {formatTimestamp(log.date, log.time)}
+                        </div>
+                        <div className="col-span-1 flex items-center">
+                          {getLogLevelBadge(log.log_level)}
+                        </div>
+                        <div className="col-span-3 font-medium text-sm text-gray-900 flex items-center">
+                          <span className="truncate" title={log.user_name || 'Unknown'}>
+                            {log.user_name || 'Unknown'}
+                          </span>
+                        </div>
+                        <div className="col-span-2 font-mono text-xs text-gray-500 flex items-center">
+                          <span className="truncate">
+                            {log.service_name || 'N/A'}
+                          </span>
+                        </div>
+                        <div className="col-span-3 text-sm text-gray-900 flex items-center">
+                          <span className="break-words">
+                            {log.message || 'No message'}
+                          </span>
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
               </div>
               
               <PaginationControls filteredCount={filteredLogs.length} />
               
               <div className="flex items-center justify-between text-sm text-muted-foreground">
-                <span>Total: {currentLogData?.num_log || allLogsCount} logs</span>
-                <span>Last updated: {formatTimestamp(validLogs[0]?.timestamp || new Date().toISOString())}</span>
+                <span>Total: {allLogsCount} logs</span>
+                <span>Last updated: {validLogs[0] ? formatTimestamp(validLogs[0].date, validLogs[0].time) : formatTimestamp(new Date().toLocaleDateString('en-GB'), new Date().toLocaleTimeString('en-GB'))}</span>
               </div>
             </TabsContent>
 
             <TabsContent value="error">
-              <div className="rounded-md border">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead className="w-[180px]">Timestamp</TableHead>
-                      <TableHead className="w-[120px]">Component</TableHead>
-                      <TableHead className="w-[200px]">Trace ID</TableHead>
-                      <TableHead>Error Message</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {currentLogs.map((log: LogEntry, index: number) => (
-                        <TableRow key={index}>
-                          <TableCell className="font-mono text-xs">
-                            {formatTimestamp(log.timestamp)}
-                          </TableCell>
-                          <TableCell className="font-medium">
-                            {log.component || 'Unknown'}
-                          </TableCell>
-                          <TableCell className="font-mono text-xs text-muted-foreground">
-                            {log.traceId || 'N/A'}
-                          </TableCell>
-                          <TableCell className="text-sm text-red-600">
+              <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
+                {/* Table Headers */}
+                <div className="grid grid-cols-12 gap-4 px-6 py-4 bg-red-50 border-b text-sm font-medium text-red-800">
+                  <div className="col-span-3">Timestamp</div>
+                  <div className="col-span-3">User</div>
+                  <div className="col-span-2">Service</div>
+                  <div className="col-span-4">Error Message</div>
+                </div>
+                
+                {/* Table Body */}
+                <div className="divide-y divide-gray-100">
+                  {currentLogs.length === 0 ? (
+                    <div className="flex items-center justify-center py-16">
+                      <div className="text-center">
+                        <CheckCircle className="h-12 w-12 text-green-300 mx-auto mb-4" />
+                        <p className="text-gray-500 font-medium text-lg">No errors found</p>
+                        <p className="text-gray-400 text-sm">System is running smoothly with no error logs</p>
+                      </div>
+                    </div>
+                  ) : (
+                    currentLogs.map((log: LogEntry, index: number) => (
+                      <div key={index} className="grid grid-cols-12 gap-4 px-6 py-4 hover:bg-red-50 transition-colors">
+                        <div className="col-span-3 font-mono text-xs text-gray-600 flex items-center">
+                          {formatTimestamp(log.date, log.time)}
+                        </div>
+                        <div className="col-span-3 font-medium text-sm text-gray-900 flex items-center">
+                          <span className="truncate" title={log.user_name || 'Unknown'}>
+                            {log.user_name || 'Unknown'}
+                          </span>
+                        </div>
+                        <div className="col-span-2 font-mono text-xs text-gray-500 flex items-center">
+                          <span className="truncate">
+                            {log.service_name || 'N/A'}
+                          </span>
+                        </div>
+                        <div className="col-span-4 text-sm text-red-600 flex items-center">
+                          <span className="break-words">
                             {log.message || 'No message'}
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                  </TableBody>
-                </Table>
-              </div>
-              
-              <PaginationControls filteredCount={filteredLogs.length} />
-            </TabsContent>
-
-            <TabsContent value="warn">
-              <div className="rounded-md border">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead className="w-[180px]">Timestamp</TableHead>
-                      <TableHead className="w-[120px]">Component</TableHead>
-                      <TableHead>Warning Message</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {currentLogs.map((log: LogEntry, index: number) => (
-                        <TableRow key={index}>
-                          <TableCell className="font-mono text-xs">
-                            {formatTimestamp(log.timestamp)}
-                          </TableCell>
-                          <TableCell className="font-medium">
-                            {log.component || 'Unknown'}
-                          </TableCell>
-                          <TableCell className="text-sm text-yellow-600">
-                            {log.message || 'No message'}
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                  </TableBody>
-                </Table>
+                          </span>
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
               </div>
               
               <PaginationControls filteredCount={filteredLogs.length} />
             </TabsContent>
 
             <TabsContent value="info">
-              <div className="rounded-md border">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead className="w-[180px]">Timestamp</TableHead>
-                      <TableHead className="w-[120px]">Component</TableHead>
-                      <TableHead>Info Message</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {currentLogs.map((log: LogEntry, index: number) => (
-                        <TableRow key={index}>
-                          <TableCell className="font-mono text-xs">
-                            {formatTimestamp(log.timestamp)}
-                          </TableCell>
-                          <TableCell className="font-medium">
-                            {log.component || 'Unknown'}
-                          </TableCell>
-                          <TableCell className="text-sm text-blue-600">
+              <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
+                {/* Table Headers */}
+                <div className="grid grid-cols-12 gap-4 px-6 py-4 bg-blue-50 border-b text-sm font-medium text-blue-800">
+                  <div className="col-span-3">Timestamp</div>
+                  <div className="col-span-3">User</div>
+                  <div className="col-span-2">Service</div>
+                  <div className="col-span-4">Info Message</div>
+                </div>
+                
+                {/* Table Body */}
+                <div className="divide-y divide-gray-100">
+                  {currentLogs.length === 0 ? (
+                    <div className="flex items-center justify-center py-16">
+                      <div className="text-center">
+                        <CheckCircle className="h-12 w-12 text-blue-300 mx-auto mb-4" />
+                        <p className="text-gray-500 font-medium text-lg">No info logs found</p>
+                        <p className="text-gray-400 text-sm">No informational messages to display</p>
+                      </div>
+                    </div>
+                  ) : (
+                    currentLogs.map((log: LogEntry, index: number) => (
+                      <div key={index} className="grid grid-cols-12 gap-4 px-6 py-4 hover:bg-blue-50 transition-colors">
+                        <div className="col-span-3 font-mono text-xs text-gray-600 flex items-center">
+                          {formatTimestamp(log.date, log.time)}
+                        </div>
+                        <div className="col-span-3 font-medium text-sm text-gray-900 flex items-center">
+                          <span className="truncate" title={log.user_name || 'Unknown'}>
+                            {log.user_name || 'Unknown'}
+                          </span>
+                        </div>
+                        <div className="col-span-2 font-mono text-xs text-gray-500 flex items-center">
+                          <span className="truncate">
+                            {log.service_name || 'N/A'}
+                          </span>
+                        </div>
+                        <div className="col-span-4 text-sm text-blue-600 flex items-center">
+                          <span className="break-words">
                             {log.message || 'No message'}
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                  </TableBody>
-                </Table>
-              </div>
-              
-              <PaginationControls filteredCount={filteredLogs.length} />
-            </TabsContent>
-
-            <TabsContent value="system">
-              <div className="rounded-md border">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead className="w-[180px]">Timestamp</TableHead>
-                      <TableHead className="w-[120px]">Component</TableHead>
-                      <TableHead className="w-[200px]">Trace ID</TableHead>
-                      <TableHead>System Message</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {currentLogs.map((log: LogEntry, index: number) => (
-                        <TableRow key={index}>
-                          <TableCell className="font-mono text-xs">
-                            {formatTimestamp(log.timestamp)}
-                          </TableCell>
-                          <TableCell className="font-medium">
-                            {log.component || 'Unknown'}
-                          </TableCell>
-                          <TableCell className="font-mono text-xs text-muted-foreground">
-                            {log.traceId?.slice(0, 8) || 'N/A'}...
-                          </TableCell>
-                          <TableCell className="text-sm">
-                            {log.message || 'No message'}
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                  </TableBody>
-                </Table>
+                          </span>
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
               </div>
               
               <PaginationControls filteredCount={filteredLogs.length} />
