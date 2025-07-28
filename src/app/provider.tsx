@@ -1,7 +1,7 @@
 import { RouterProvider } from 'react-router-dom';
 import { ThemeProvider } from '@/components/theme-provider';
 import { AuthProvider } from '@/contexts/AuthContext';
-import { router } from './router';
+import { router } from './routes/router';
 import { ConversationProvider } from '@/contexts/ConversationContext';
 import { Toaster } from 'sonner';
 import { HeaderProvider } from '@/contexts/HeaderContext';
