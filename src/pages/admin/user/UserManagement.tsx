@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
+import { useHeader } from '@/contexts/HeaderContext';
 import {
   Table,
   TableBody,
@@ -17,7 +18,7 @@ import { Loader2, Search, Users } from 'lucide-react';
 
 interface User {
   id: string;
-  fullname: string;
+  name: string;
   email: string;
   role: string;
   co_code_ld: string;
@@ -38,6 +39,7 @@ const UserManagement = () => {
   const [totalUsers, setTotalUsers] = useState(0);
 
   const { token } = useAuth();
+  const { setHeaderInfo } = useHeader();
 
   const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
   const USER_API = '/admin/users'; // Endpoint đã được gắn Authorizer
@@ -73,8 +75,23 @@ const UserManagement = () => {
     fetchUsers();
   }, []);
 
+  useEffect(() => {
+    setHeaderInfo({
+      title: 'User Management',
+      description: 'Manage users, roles and permissions',
+      badge: (
+        <Badge variant="outline">
+          <Users className="size-3 mr-1" />
+          {totalUsers} Active Users
+        </Badge>
+      )
+    });
+
+    return () => setHeaderInfo(null);
+  }, [setHeaderInfo, totalUsers]);
+
   const filteredUsers = users.filter(user =>
-    user.fullname.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    // user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
     user.role.toLowerCase().includes(searchTerm.toLowerCase()) ||
     (user.co_code_ld || '').toLowerCase().includes(searchTerm.toLowerCase())
@@ -93,21 +110,6 @@ const UserManagement = () => {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">User Management</h1>
-          <p className="text-muted-foreground">
-            Manage users, roles, and permissions here.
-          </p>
-        </div>
-        <div className="flex items-center space-x-2">
-          <Users className="h-5 w-5" />
-          <span className="text-sm text-muted-foreground">
-            Total: {totalUsers} users
-          </span>
-        </div>
-      </div>
-
       <Card>
         <CardHeader>
           <CardTitle>Users List</CardTitle>
@@ -160,7 +162,7 @@ const UserManagement = () => {
                     filteredUsers.map((user) => (
                       <TableRow key={user.id}>
                         <TableCell className="font-medium">{user.id}</TableCell>
-                        <TableCell>{user.fullname}</TableCell>
+                        <TableCell>{user.name}</TableCell>
                         <TableCell>{user.email}</TableCell>
                         <TableCell>
                           <Badge variant={getRoleBadgeVariant(user.role)}>

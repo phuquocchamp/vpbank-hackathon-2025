@@ -6,6 +6,16 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { jwtDecode } from 'jwt-decode';
+
+interface DecodedToken {
+  sub: string;
+  email: string;
+  name?: string;
+  'custom:role'?: 'USER' | 'ADMIN';
+  'custom:co_code_ld'?: string;
+  exp: number;
+}
 
 const LoginPage = () => {
   const [email, setEmail] = useState('');
@@ -18,7 +28,7 @@ const LoginPage = () => {
   const location = useLocation();
 
   const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
-  const AUTH_API = '/auth/login'; // Endpoint đã được gắn Authorizer
+  const AUTH_API = '/auth/login-v2';
 
   const from = location.state?.from?.pathname || '/';
 
@@ -42,21 +52,23 @@ const LoginPage = () => {
         throw new Error(data.error || 'Login failed');
       }
 
-      // Lấy idToken và token từ response
-      const { idToken, token: customToken } = data;
-      if (!idToken || !customToken) {
-        throw new Error('No token or idToken received');
+      // Lấy idToken từ response
+      const { idToken } = data;
+      if (!idToken) {
+        throw new Error('No idToken received');
       }
 
-      // Login với idToken (dùng cho AuthContext)
-      login(idToken, customToken);
-
-      // Decode token để lấy role
-      const decodedToken = JSON.parse(atob(customToken.split('.')[1]));
+      // Decode idToken để lấy thông tin user
+      const decodedToken = jwtDecode<DecodedToken>(idToken);
       console.log('Decoded Token:', decodedToken);
-      const userRole = decodedToken.role || 'USER';
 
-      // Sử dụng biến 'from' để redirect về page trước đó hoặc default route
+      // Login với idToken
+      login(idToken);
+
+      // Lấy role từ custom claim
+      const userRole = decodedToken['custom:role'] || 'USER';
+
+      // Redirect logic
       if (from !== '/') {
         navigate(from, { replace: true });
       } else {

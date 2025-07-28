@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from './AuthContext';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
-interface Message {
+export interface Message {
   id: string;
   content: string | {
     sql?: string;
@@ -15,7 +15,7 @@ interface Message {
   timestamp: Date;
 }
 
-interface Conversation {
+export interface Conversation {
   conversationId: string;
   userId: string;
   title: string;
@@ -125,9 +125,12 @@ export const ConversationProvider: React.FC<{ children: React.ReactNode }> = ({ 
 
   const userId = user?.id;
   const co_code_ld = user?.co_code_ld;
+  const isAdmin = user?.role === 'ADMIN';
 
-  console.log('ConversationProvider user:', userId, co_code_ld);
-
+  // Determine API endpoint based on user role
+  const getConversationEndpoint = useCallback(() => {
+    return isAdmin ? '/admin/conversations' : '/client/conversations';
+  }, [isAdmin]);
 
   const createNewConversation = useCallback(async (): Promise<Conversation> => {
     dispatch({ type: 'SET_LOADING', payload: true });
@@ -140,14 +143,19 @@ export const ConversationProvider: React.FC<{ children: React.ReactNode }> = ({ 
       if (!user || !user.id) {
         throw new Error('User not authenticated');
       }
-      const newConversation = {
+
+      const newConversation: any = {
         conversationId: uuidv4(),
         title: 'New Chat',
         userId: user.id,
-        co_code_ld: user.co_code_ld
       };
 
-      const response = await fetch(`${API_BASE_URL}/admin/conversations`, {
+      // Add co_code_ld only for CLIENT users
+      if (!isAdmin && user.co_code_ld) {
+        newConversation.co_code_ld = user.co_code_ld;
+      }
+
+      const response = await fetch(`${API_BASE_URL}${getConversationEndpoint()}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(newConversation),
@@ -165,7 +173,7 @@ export const ConversationProvider: React.FC<{ children: React.ReactNode }> = ({ 
     } finally {
       dispatch({ type: 'SET_LOADING', payload: false });
     }
-  }, [user, authLoading]);
+  }, [user, authLoading, isAdmin, getConversationEndpoint]);
 
   const setCurrentConversation = useCallback((conversation: Conversation | null) => {
     if (conversation) {
@@ -186,8 +194,8 @@ export const ConversationProvider: React.FC<{ children: React.ReactNode }> = ({ 
         return;
       }
 
-      // If not found, fetch from API
-      const response = await fetch(`${API_BASE_URL}/admin/conversations?id=${id}`);
+      // If not found, fetch from API - use dynamic endpoint
+      const response = await fetch(`${API_BASE_URL}${getConversationEndpoint()}?id=${id}`);
       if (!response.ok) throw new Error('Failed to load conversation');
 
       const data = await response.json();
@@ -213,7 +221,7 @@ export const ConversationProvider: React.FC<{ children: React.ReactNode }> = ({ 
     } finally {
       dispatch({ type: 'SET_LOADING', payload: false });
     }
-  }, [state.conversations]);
+  }, [state.conversations, getConversationEndpoint]);
 
   const sendMessage = useCallback(async (conversationId: string, content: string): Promise<void> => {
     const userMessage: Message = {
@@ -226,27 +234,37 @@ export const ConversationProvider: React.FC<{ children: React.ReactNode }> = ({ 
     dispatch({ type: 'ADD_MESSAGE', payload: { conversationId, message: userMessage } });
 
     try {
-      // Get the vpbank_id_token from localStorage
       const vpbankIdToken = localStorage.getItem('vpbank_id_token');
-      
-      const response = await fetch(`${API_BASE_URL}/admin/conversations/${conversationId}/messages`, {
+
+      const endpoint = `${API_BASE_URL}${getConversationEndpoint()}/${conversationId}/messages`;
+
+      const requestBody: any = {
+        content: content,
+        idToken: vpbankIdToken
+      };
+
+      // Add co_code_ld for CLIENT users
+      if (!isAdmin && user?.co_code_ld) {
+        requestBody.co_code_ld = user.co_code_ld;
+      }
+
+      const response = await fetch(endpoint, {
         method: 'POST',
-        headers: { 
+        headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${vpbankIdToken}` // Include the token in the request headers
+          'Authorization': `Bearer ${vpbankIdToken}`
         },
-        body: JSON.stringify({ content: content, idToken: vpbankIdToken }),
+        body: JSON.stringify(requestBody),
       });
 
       if (!response.ok) throw new Error('Failed to send message');
 
       const data = await response.json();
 
-      // Process the response structure
       if (data.assistant) {
         const assistantMessage: Message = {
           id: data.assistant.id,
-          content: data.assistant.content, // This can be string or object
+          content: data.assistant.content,
           role: data.assistant.role,
           timestamp: new Date(data.assistant.timestamp),
         };
@@ -256,12 +274,17 @@ export const ConversationProvider: React.FC<{ children: React.ReactNode }> = ({ 
     } catch (error) {
       dispatch({ type: 'SET_ERROR', payload: error instanceof Error ? error.message : 'Unknown error' });
     }
-  }, []);
+  }, [isAdmin, user?.co_code_ld, getConversationEndpoint]);
 
   const deleteConversation = useCallback(async (id: string): Promise<void> => {
     try {
-      const response = await fetch(`${API_BASE_URL}/admin/conversations/${id}`, {
+      const vpbankIdToken = localStorage.getItem('vpbank_id_token');
+
+      const response = await fetch(`${API_BASE_URL}${getConversationEndpoint()}/${id}`, {
         method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${vpbankIdToken}`
+        }
       });
 
       if (!response.ok) throw new Error('Failed to delete conversation');
@@ -270,30 +293,53 @@ export const ConversationProvider: React.FC<{ children: React.ReactNode }> = ({ 
     } catch (error) {
       dispatch({ type: 'SET_ERROR', payload: error instanceof Error ? error.message : 'Unknown error' });
     }
-  }, []);
+  }, [getConversationEndpoint]);
 
   const updateConversationTitle = useCallback(async (id: string, title: string): Promise<void> => {
     try {
-      const response = await fetch(`${API_BASE_URL}/admin/conversations/${id}`, {
+      const vpbankIdToken = localStorage.getItem('vpbank_id_token');
+
+      // Find current conversation to preserve messages
+      const currentConv = state.conversations.find(conv => conv.conversationId === id);
+
+      const response = await fetch(`${API_BASE_URL}${getConversationEndpoint()}/${id}`, {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${vpbankIdToken}`
+        },
         body: JSON.stringify({ title }),
       });
 
       if (!response.ok) throw new Error('Failed to update conversation title');
 
       const updatedConversation = await response.json();
-      dispatch({ type: 'UPDATE_CONVERSATION', payload: updatedConversation });
+
+      // Merge with existing conversation to preserve messages
+      const mergedConversation = {
+        ...currentConv,
+        ...updatedConversation,
+        messages: currentConv?.messages || updatedConversation.messages || []
+      };
+
+      dispatch({ type: 'UPDATE_CONVERSATION', payload: mergedConversation });
     } catch (error) {
       dispatch({ type: 'SET_ERROR', payload: error instanceof Error ? error.message : 'Unknown error' });
       throw error;
     }
-  }, []);
+  }, [getConversationEndpoint, state.conversations]);
 
-  const loadConversations = useCallback(async (): Promise<void> => {
+  const loadAllConversations = useCallback(async (): Promise<void> => {
     dispatch({ type: 'SET_LOADING', payload: true });
     try {
-      const response = await fetch(`${API_BASE_URL}/admin/conversations`);
+      const vpbankIdToken = localStorage.getItem('vpbank_id_token');
+
+      const response = await fetch(`${API_BASE_URL}${getConversationEndpoint()}`, {
+        headers: {
+          'Authorization': `Bearer ${vpbankIdToken}`
+        }
+      });
+
       if (!response.ok) throw new Error('Failed to load conversations');
 
       const data = await response.json();
@@ -315,7 +361,7 @@ export const ConversationProvider: React.FC<{ children: React.ReactNode }> = ({ 
     } finally {
       dispatch({ type: 'SET_LOADING', payload: false });
     }
-  }, []);
+  }, [getConversationEndpoint]);
 
   return (
     <ConversationContext.Provider
@@ -325,7 +371,7 @@ export const ConversationProvider: React.FC<{ children: React.ReactNode }> = ({ 
         loadConversation,
         sendMessage,
         deleteConversation,
-        loadConversations,
+        loadConversations: loadAllConversations,
         updateConversationTitle,
         setCurrentConversation,
       }}
@@ -362,8 +408,13 @@ export const useConversationWithNavigation = () => {
       }
 
       const newConversation = await conversation.createNewConversation();
-      // Navigate using the ID from API response
-      navigate(`/admin/conversations/${newConversation.conversationId}`);
+
+      // Navigate based on user role
+      const path = user.role === 'ADMIN'
+        ? `/admin/conversations/${newConversation.conversationId}`
+        : `/client/conversations/${newConversation.conversationId}`;
+
+      navigate(path);
       return newConversation;
     } catch (error) {
       console.error('Failed to create and navigate to new conversation:', error);

@@ -6,8 +6,7 @@ import LoginPage from '../../pages/auth/LoginPage';
 
 // Client pages
 import Analytics from '../../pages/client/analytics/Analytics';
-import Conversation from '../../pages/client/conversation/Conversation';
-import Dashboard from '../../pages/client/dashboard/Dashboard';
+import ClientDashboard from '../../pages/client/dashboard/ClientDashboard';
 
 // Admin pages
 import { PlaceholderPage } from '@/components/common/SampleComponent';
@@ -17,6 +16,7 @@ import KnowledgeBase from '@/pages/admin/knowledge-base/KnowledgeBase';
 import SystemReport from '@/pages/admin/report/SystemReport';
 import AdminDashboard from '../../pages/admin/dashboard/AdminDashboard';
 import UserManagement from '../../pages/admin/user/UserManagement';
+import ClientConversation from '../../pages/client/conversation/ClientConversation';
 
 
 // Create router
@@ -51,11 +51,15 @@ export const router = createBrowserRouter([
     children: [
       {
         index: true,
-        element: <Dashboard />,
+        element: <ClientDashboard />,
       },
       {
         path: 'conversations',
-        element: <Conversation />,
+        element: <ClientConversation />,
+      },
+      {
+        path: 'conversations/:conversationId',
+        element: <ClientConversation />,
       },
       {
         path: 'analytics',

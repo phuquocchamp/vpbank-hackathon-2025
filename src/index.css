@@ -76,6 +76,10 @@
   --sidebar-ring: oklch(0.704 0.04 256.788);
 }
 
+/* .scroll-area-viewport {
+  overflow-y: scroll !important;
+} */
+
 .dark {
   --background: oklch(0.2 0 0); /* zinc-900 */
   --foreground: oklch(0.98 0 0); /* zinc-50 */
@@ -116,5 +120,41 @@
   }
   body {
     @apply bg-background text-foreground;
+  }
+  
+  /* Ensure proper scrolling for conversation area */
+  .conversation-scroll-area {
+    overflow-y: auto !important;
+    max-height: 100%;
+  }
+  
+  /* Prevent layout overflow */
+  .conversation-container {
+    height: 100%;
+    overflow: hidden;
+  }
+  
+  /* Floating message input styles */
+  .floating-input-container {
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+  }
+  
+  /* Custom scrollbar for conversation area */
+  .conversation-scroll-area::-webkit-scrollbar {
+    width: 6px;
+  }
+  
+  .conversation-scroll-area::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  
+  .conversation-scroll-area::-webkit-scrollbar-thumb {
+    background: hsl(var(--border));
+    border-radius: 3px;
+  }
+  
+  .conversation-scroll-area::-webkit-scrollbar-thumb:hover {
+    background: hsl(var(--border) / 0.8);
   }
 }
