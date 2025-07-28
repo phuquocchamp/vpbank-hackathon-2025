@@ -5,8 +5,9 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Textarea } from "@/components/ui/textarea"
-import { FileText, Trash2, Upload } from 'lucide-react'
+import { FileText, Trash2, Upload, Database } from 'lucide-react'
 import { useEffect, useState } from 'react'
+import { useHeader } from '@/contexts/HeaderContext'
 
 interface KnowledgeBaseItem {
   knowledgebaseId: string
@@ -30,6 +31,7 @@ interface ApiResponse {
 const BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
 const KnowledgeBase = () => {
+  const { setHeaderInfo } = useHeader();
   const [knowledgeItems, setKnowledgeItems] = useState<KnowledgeBaseItem[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -45,6 +47,22 @@ const KnowledgeBase = () => {
   useEffect(() => {
     fetchKnowledgeBase()
   }, [])
+
+  // Set header info for knowledge base page
+  useEffect(() => {
+    setHeaderInfo({
+      title: 'Knowledge Base',
+      description: 'Manage and organize knowledge assets',
+      badge: (
+        <Badge variant="outline" className="text-xs">
+          <Database className="size-3 mr-1" />
+          {knowledgeItems.length} Items
+        </Badge>
+      )
+    });
+
+    return () => setHeaderInfo(null);
+  }, [setHeaderInfo, knowledgeItems.length]);
 
   const fetchKnowledgeBase = async () => {
     try {
@@ -238,11 +256,6 @@ const KnowledgeBase = () => {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight">Admin Knowledge Base</h1>
-        <p className="text-gray-600 mt-2">Welcome to the VPBank Admin Knowledge Base</p>
-      </div>
-
       <Tabs defaultValue="add" className="w-full">
         <TabsList className="grid w-full grid-cols-2">
           <TabsTrigger value="add">Add Knowledge</TabsTrigger>

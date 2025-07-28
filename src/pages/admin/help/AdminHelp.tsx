@@ -1,6 +1,27 @@
 import ComingSoon from '@/components/common/ComingSoon';
+import { useHeader } from '@/contexts/HeaderContext';
+import { Badge } from '@/components/ui/badge';
+import { HelpCircle } from 'lucide-react';
+import { useEffect } from 'react';
 
 const AdminHelp = () => {
+  const { setHeaderInfo } = useHeader();
+
+  useEffect(() => {
+    setHeaderInfo({
+      title: 'Help & Support',
+      description: 'Get assistance and documentation',
+      badge: (
+        <Badge variant="outline" className="text-xs">
+          <HelpCircle className="size-3 mr-1" />
+          Coming Soon
+        </Badge>
+      )
+    });
+
+    return () => setHeaderInfo(null);
+  }, [setHeaderInfo]);
+
   return (
     <ComingSoon
       title="Help & Support Center"

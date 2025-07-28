@@ -1,6 +1,6 @@
 import { Outlet } from 'react-router-dom';
 import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar';
-import { DynamicSidebar } from './DynamicSidebar';
+import { DynamicSidebar } from '@/components/sidebar/DynamicSidebar';
 import Header from './Header';
 
 const Layout = () => {

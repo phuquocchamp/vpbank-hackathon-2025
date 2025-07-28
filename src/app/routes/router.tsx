@@ -6,7 +6,7 @@ import LoginPage from '../../pages/auth/LoginPage';
 
 // Client pages
 import Analytics from '../../pages/client/analytics/Analytics';
-import Conversation from '../../pages/client/conversation/Conversation';
+import Conversation from '../../pages/client/conversation/ClientConversation';
 import Dashboard from '../../pages/client/dashboard/Dashboard';
 
 // Admin pages

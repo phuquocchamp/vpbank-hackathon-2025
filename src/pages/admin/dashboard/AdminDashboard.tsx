@@ -7,6 +7,7 @@ import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { ChartContainer, ChartTooltip } from '@/components/ui/chart';
 import { PieChart, Pie, Cell, AreaChart, Area, XAxis, YAxis, CartesianGrid, BarChart, Bar } from 'recharts';
+import { useHeader } from '@/contexts/HeaderContext';
 
 // Interface for log data based on API response structure
 interface LogEntry {
@@ -30,15 +31,18 @@ interface BillingEntry {
 }
 
 const AdminDashboard = () => {
+  const { setHeaderInfo } = useHeader();
+
+  // Log states
   const [logData, setLogData] = useState<LogData | null>(null);
   const [isLoadingLogs, setIsLoadingLogs] = useState(true);
   const [logError, setLogError] = useState<string | null>(null);
-  
+
   // Billing states
   const [billingData, setBillingData] = useState<BillingEntry[] | null>(null);
   const [isLoadingBilling, setIsLoadingBilling] = useState(true);
   const [billingError, setBillingError] = useState<string | null>(null);
-  
+
   // Pagination states
   const [currentPage, setCurrentPage] = useState(1);
   const [activeTab, setActiveTab] = useState('all');
@@ -46,11 +50,27 @@ const AdminDashboard = () => {
 
   const BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
+  // Set header info for admin dashboard
+  useEffect(() => {
+    setHeaderInfo({
+      title: 'Admin Dashboard',
+      description: 'System overview and monitoring center',
+      badge: (
+        <Badge variant="outline" className="text-xs">
+          <Activity className="size-3 mr-1" />
+          Live Data
+        </Badge>
+      )
+    });
+
+    return () => setHeaderInfo(null);
+  }, [setHeaderInfo]);
+
   // Fetch logs from API
   const fetchLogs = async () => {
     setIsLoadingLogs(true);
     setLogError(null);
-    
+
     try {
       const response = await fetch(`${BASE_URL}/chatbot/get-log`, {
         method: 'GET',
@@ -64,7 +84,7 @@ const AdminDashboard = () => {
       }
 
       const result = await response.json();
-      
+
       // API response có cấu trúc { body: { status, num_log, num_error, logs } }
       if (result.body) {
         setLogData(result.body);
@@ -84,7 +104,7 @@ const AdminDashboard = () => {
   const fetchBilling = async () => {
     setIsLoadingBilling(true);
     setBillingError(null);
-    
+
     try {
       const response = await fetch(`${BASE_URL}/billing`, {
         method: 'GET',
@@ -98,7 +118,7 @@ const AdminDashboard = () => {
       }
 
       const result = await response.json();
-      
+
       // API response có cấu trúc { body: [{ date, cost }, ...] }
       if (result.body && Array.isArray(result.body)) {
         setBillingData(result.body);
@@ -234,10 +254,10 @@ const AdminDashboard = () => {
 
   // Only use data if we have successfully loaded it or if we're showing mock data
   const currentLogData = logData || (logError ? null : mockLogData);
-  
+
   // Ensure logs array is always valid - only if we have valid data
   const validLogs = currentLogData && Array.isArray(currentLogData.logs) ? currentLogData.logs : [];
-  
+
   // Calculate counts for each tab - only if we have valid data
   const allLogsCount = validLogs.length;
   const errorLogsCount = validLogs.filter(log => log.logLevel.toLowerCase() === 'error').length;
@@ -263,7 +283,7 @@ const AdminDashboard = () => {
 
   // Get current filtered logs
   const filteredLogs = getFilteredLogs(activeTab);
-  
+
   // Calculate pagination
   const totalPages = Math.ceil(filteredLogs.length / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
@@ -284,7 +304,7 @@ const AdminDashboard = () => {
       { name: 'Info', value: infoLogsCount, color: '#3b82f6' },
       { name: 'System', value: systemLogsCount, color: '#6b7280' },
     ].filter(item => item.value > 0);
-    
+
     return data;
   };
 
@@ -292,9 +312,9 @@ const AdminDashboard = () => {
     const currentBillingData = billingData || mockBillingData;
     return currentBillingData.map(entry => ({
       ...entry,
-      formattedDate: new Date(entry.date).toLocaleDateString('en-US', { 
-        month: 'short', 
-        day: 'numeric' 
+      formattedDate: new Date(entry.date).toLocaleDateString('en-US', {
+        month: 'short',
+        day: 'numeric'
       }),
       formattedCost: `$${entry.cost.toFixed(2)}`
     }));
@@ -308,11 +328,11 @@ const AdminDashboard = () => {
   const getTimelineChartData = () => {
     // Group logs by hour for the timeline
     const timeMap = new Map();
-    
+
     validLogs.forEach(log => {
       const date = new Date(log.timestamp);
       const hourKey = `${date.getDate()}/${date.getMonth() + 1} ${date.getHours()}h`;
-      
+
       if (!timeMap.has(hourKey)) {
         timeMap.set(hourKey, {
           time: hourKey,
@@ -324,12 +344,12 @@ const AdminDashboard = () => {
           system: 0
         });
       }
-      
+
       const entry = timeMap.get(hourKey);
       entry.total++;
       entry[log.logLevel.toLowerCase()]++;
     });
-    
+
     return Array.from(timeMap.values())
       .sort((a, b) => a.timestamp - b.timestamp)
       .slice(-12); // Last 12 hours
@@ -347,13 +367,13 @@ const AdminDashboard = () => {
   // Pagination component
   const PaginationControls = ({ filteredCount }: { filteredCount: number }) => {
     if (totalPages <= 1) return null;
-    
+
     return (
       <div className="flex items-center justify-between px-2 py-4">
         <div className="text-sm text-muted-foreground">
           Showing {startIndex + 1} to {Math.min(endIndex, filteredCount)} of {filteredCount} entries
         </div>
-        
+
         <div className="flex items-center space-x-2">
           <Button
             variant="outline"
@@ -364,7 +384,7 @@ const AdminDashboard = () => {
             <ChevronLeft className="h-4 w-4" />
             Previous
           </Button>
-          
+
           <div className="flex items-center space-x-1">
             {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
               <Button
@@ -378,7 +398,7 @@ const AdminDashboard = () => {
               </Button>
             ))}
           </div>
-          
+
           <Button
             variant="outline"
             size="sm"
@@ -395,11 +415,6 @@ const AdminDashboard = () => {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight">Admin Dashboard</h1>
-        <p className="text-gray-600 mt-2">Welcome to the VPBank Admin Portal</p>
-      </div>
-
       {/* Charts Section */}
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 lg:gap-6">
         {/* Log Level Distribution */}
@@ -428,14 +443,14 @@ const AdminDashboard = () => {
                   strokeWidth={2}
                 >
                   {getLogLevelChartData().map((entry, index) => (
-                    <Cell 
-                      key={`cell-${index}`} 
+                    <Cell
+                      key={`cell-${index}`}
                       fill={entry.color}
                       className="hover:opacity-80 transition-opacity duration-200"
                     />
                   ))}
                 </Pie>
-                <ChartTooltip 
+                <ChartTooltip
                   content={({ active, payload }) => {
                     if (active && payload && payload.length) {
                       const data = payload[0].payload;
@@ -454,14 +469,14 @@ const AdminDashboard = () => {
                 />
               </PieChart>
             </ChartContainer>
-            
+
             {/* Log Level Summary */}
             <div className="mt-3 sm:mt-4 space-y-1.5 sm:space-y-2">
               {getLogLevelChartData().map((item) => (
                 <div key={item.name} className="flex items-center justify-between text-xs sm:text-sm">
                   <div className="flex items-center gap-2">
-                    <div 
-                      className="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full flex-shrink-0" 
+                    <div
+                      className="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full flex-shrink-0"
                       style={{ backgroundColor: item.color }}
                     />
                     <span className="truncate">{item.name}</span>
@@ -493,7 +508,7 @@ const AdminDashboard = () => {
                 </div>
                 <span className="text-lg sm:text-xl lg:text-2xl font-bold text-red-600">{errorLogsCount}</span>
               </div>
-              
+
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <div className="w-2 h-2 bg-yellow-500 rounded-full flex-shrink-0"></div>
@@ -501,7 +516,7 @@ const AdminDashboard = () => {
                 </div>
                 <span className="text-lg sm:text-xl lg:text-2xl font-bold text-yellow-600">{warnLogsCount}</span>
               </div>
-              
+
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <div className="w-2 h-2 bg-blue-500 rounded-full flex-shrink-0"></div>
@@ -509,7 +524,7 @@ const AdminDashboard = () => {
                 </div>
                 <span className="text-lg sm:text-xl lg:text-2xl font-bold text-blue-600">{infoLogsCount}</span>
               </div>
-              
+
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <div className="w-2 h-2 bg-gray-500 rounded-full flex-shrink-0"></div>
@@ -518,7 +533,7 @@ const AdminDashboard = () => {
                 <span className="text-lg sm:text-xl lg:text-2xl font-bold text-gray-600">{systemLogsCount}</span>
               </div>
             </div>
-            
+
             <div className="pt-3 sm:pt-4 border-t">
               <div className="flex items-center justify-between">
                 <span className="text-xs sm:text-sm font-medium">Total Logs</span>
@@ -550,28 +565,28 @@ const AdminDashboard = () => {
               <AreaChart data={getTimelineChartData()}>
                 <defs>
                   <linearGradient id="totalGradient" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#8b5cf6" stopOpacity={0.8}/>
-                    <stop offset="95%" stopColor="#8b5cf6" stopOpacity={0.1}/>
+                    <stop offset="5%" stopColor="#8b5cf6" stopOpacity={0.8} />
+                    <stop offset="95%" stopColor="#8b5cf6" stopOpacity={0.1} />
                   </linearGradient>
                   <linearGradient id="errorGradient" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#ef4444" stopOpacity={0.8}/>
-                    <stop offset="95%" stopColor="#ef4444" stopOpacity={0.1}/>
+                    <stop offset="5%" stopColor="#ef4444" stopOpacity={0.8} />
+                    <stop offset="95%" stopColor="#ef4444" stopOpacity={0.1} />
                   </linearGradient>
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" className="opacity-30" />
-                <XAxis 
-                  dataKey="time" 
+                <XAxis
+                  dataKey="time"
                   className="text-xs"
                   tick={{ fill: '#6b7280', fontSize: 9 }}
                   interval="preserveStartEnd"
                   minTickGap={5}
                 />
-                <YAxis 
+                <YAxis
                   className="text-xs"
                   tick={{ fill: '#6b7280', fontSize: 9 }}
                   width={25}
                 />
-                <ChartTooltip 
+                <ChartTooltip
                   content={({ active, payload, label }) => {
                     if (active && payload && payload.length) {
                       return (
@@ -664,25 +679,25 @@ const AdminDashboard = () => {
               <BarChart data={getBillingChartData()}>
                 <defs>
                   <linearGradient id="billingGradient" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.8}/>
-                    <stop offset="95%" stopColor="#3b82f6" stopOpacity={0.4}/>
+                    <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.8} />
+                    <stop offset="95%" stopColor="#3b82f6" stopOpacity={0.4} />
                   </linearGradient>
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" className="opacity-30" />
-                <XAxis 
-                  dataKey="formattedDate" 
+                <XAxis
+                  dataKey="formattedDate"
                   className="text-xs"
                   tick={{ fill: '#6b7280', fontSize: 11 }}
                   interval="preserveStartEnd"
                   minTickGap={10}
                 />
-                <YAxis 
+                <YAxis
                   className="text-xs"
                   tick={{ fill: '#6b7280', fontSize: 11 }}
                   width={40}
                   tickFormatter={(value) => `$${value}`}
                 />
-                <ChartTooltip 
+                <ChartTooltip
                   content={({ active, payload, label }) => {
                     if (active && payload && payload.length) {
                       const data = payload[0].payload;
@@ -776,75 +791,75 @@ const AdminDashboard = () => {
               </div>
             </div>
           ) : (
-          <Tabs defaultValue="all" value={activeTab} onValueChange={handleTabChange} className="w-full">
-            <TabsList className="grid w-full grid-cols-5">
-              <TabsTrigger value="all">All Logs ({allLogsCount})</TabsTrigger>
-              <TabsTrigger value="error">Errors ({errorLogsCount})</TabsTrigger>
-              <TabsTrigger value="warn">Warnings ({warnLogsCount})</TabsTrigger>
-              <TabsTrigger value="info">Info ({infoLogsCount})</TabsTrigger>
-              <TabsTrigger value="system">System ({systemLogsCount})</TabsTrigger>
-            </TabsList>
-            
-            <TabsContent value="all" className="space-y-4">
-              <div className="rounded-md border">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead className="w-[180px]">
-                        <Clock className="size-4 inline mr-2" />
-                        Timestamp
-                      </TableHead>
-                      <TableHead className="w-[100px]">Level</TableHead>
-                      <TableHead className="w-[120px]">Component</TableHead>
-                      <TableHead className="w-[200px]">Trace ID</TableHead>
-                      <TableHead>Message</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {currentLogs.map((log: LogEntry, index: number) => (
-                      <TableRow key={index}>
-                        <TableCell className="font-mono text-xs">
-                          {formatTimestamp(log.timestamp)}
-                        </TableCell>
-                        <TableCell>
-                          {getLogLevelBadge(log.logLevel)}
-                        </TableCell>
-                        <TableCell className="font-medium text-sm">
-                          {log.component || 'Unknown'}
-                        </TableCell>
-                        <TableCell className="font-mono text-xs text-muted-foreground">
-                          {log.traceId?.slice(0, 8) || 'N/A'}...
-                        </TableCell>
-                        <TableCell className="text-sm">
-                          {log.message || 'No message'}
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </div>
-              
-              <PaginationControls filteredCount={filteredLogs.length} />
-              
-              <div className="flex items-center justify-between text-sm text-muted-foreground">
-                <span>Total: {currentLogData?.num_log || allLogsCount} logs</span>
-                <span>Last updated: {formatTimestamp(validLogs[0]?.timestamp || new Date().toISOString())}</span>
-              </div>
-            </TabsContent>
+            <Tabs defaultValue="all" value={activeTab} onValueChange={handleTabChange} className="w-full">
+              <TabsList className="grid w-full grid-cols-5">
+                <TabsTrigger value="all">All Logs ({allLogsCount})</TabsTrigger>
+                <TabsTrigger value="error">Errors ({errorLogsCount})</TabsTrigger>
+                <TabsTrigger value="warn">Warnings ({warnLogsCount})</TabsTrigger>
+                <TabsTrigger value="info">Info ({infoLogsCount})</TabsTrigger>
+                <TabsTrigger value="system">System ({systemLogsCount})</TabsTrigger>
+              </TabsList>
 
-            <TabsContent value="error">
-              <div className="rounded-md border">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead className="w-[180px]">Timestamp</TableHead>
-                      <TableHead className="w-[120px]">Component</TableHead>
-                      <TableHead className="w-[200px]">Trace ID</TableHead>
-                      <TableHead>Error Message</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {currentLogs.map((log: LogEntry, index: number) => (
+              <TabsContent value="all" className="space-y-4">
+                <div className="rounded-md border">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead className="w-[180px]">
+                          <Clock className="size-4 inline mr-2" />
+                          Timestamp
+                        </TableHead>
+                        <TableHead className="w-[100px]">Level</TableHead>
+                        <TableHead className="w-[120px]">Component</TableHead>
+                        <TableHead className="w-[200px]">Trace ID</TableHead>
+                        <TableHead>Message</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {currentLogs.map((log: LogEntry, index: number) => (
+                        <TableRow key={index}>
+                          <TableCell className="font-mono text-xs">
+                            {formatTimestamp(log.timestamp)}
+                          </TableCell>
+                          <TableCell>
+                            {getLogLevelBadge(log.logLevel)}
+                          </TableCell>
+                          <TableCell className="font-medium text-sm">
+                            {log.component || 'Unknown'}
+                          </TableCell>
+                          <TableCell className="font-mono text-xs text-muted-foreground">
+                            {log.traceId?.slice(0, 8) || 'N/A'}...
+                          </TableCell>
+                          <TableCell className="text-sm">
+                            {log.message || 'No message'}
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+
+                <PaginationControls filteredCount={filteredLogs.length} />
+
+                <div className="flex items-center justify-between text-sm text-muted-foreground">
+                  <span>Total: {currentLogData?.num_log || allLogsCount} logs</span>
+                  <span>Last updated: {formatTimestamp(validLogs[0]?.timestamp || new Date().toISOString())}</span>
+                </div>
+              </TabsContent>
+
+              <TabsContent value="error">
+                <div className="rounded-md border">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead className="w-[180px]">Timestamp</TableHead>
+                        <TableHead className="w-[120px]">Component</TableHead>
+                        <TableHead className="w-[200px]">Trace ID</TableHead>
+                        <TableHead>Error Message</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {currentLogs.map((log: LogEntry, index: number) => (
                         <TableRow key={index}>
                           <TableCell className="font-mono text-xs">
                             {formatTimestamp(log.timestamp)}
@@ -860,25 +875,25 @@ const AdminDashboard = () => {
                           </TableCell>
                         </TableRow>
                       ))}
-                  </TableBody>
-                </Table>
-              </div>
-              
-              <PaginationControls filteredCount={filteredLogs.length} />
-            </TabsContent>
+                    </TableBody>
+                  </Table>
+                </div>
 
-            <TabsContent value="warn">
-              <div className="rounded-md border">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead className="w-[180px]">Timestamp</TableHead>
-                      <TableHead className="w-[120px]">Component</TableHead>
-                      <TableHead>Warning Message</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {currentLogs.map((log: LogEntry, index: number) => (
+                <PaginationControls filteredCount={filteredLogs.length} />
+              </TabsContent>
+
+              <TabsContent value="warn">
+                <div className="rounded-md border">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead className="w-[180px]">Timestamp</TableHead>
+                        <TableHead className="w-[120px]">Component</TableHead>
+                        <TableHead>Warning Message</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {currentLogs.map((log: LogEntry, index: number) => (
                         <TableRow key={index}>
                           <TableCell className="font-mono text-xs">
                             {formatTimestamp(log.timestamp)}
@@ -891,25 +906,25 @@ const AdminDashboard = () => {
                           </TableCell>
                         </TableRow>
                       ))}
-                  </TableBody>
-                </Table>
-              </div>
-              
-              <PaginationControls filteredCount={filteredLogs.length} />
-            </TabsContent>
+                    </TableBody>
+                  </Table>
+                </div>
 
-            <TabsContent value="info">
-              <div className="rounded-md border">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead className="w-[180px]">Timestamp</TableHead>
-                      <TableHead className="w-[120px]">Component</TableHead>
-                      <TableHead>Info Message</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {currentLogs.map((log: LogEntry, index: number) => (
+                <PaginationControls filteredCount={filteredLogs.length} />
+              </TabsContent>
+
+              <TabsContent value="info">
+                <div className="rounded-md border">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead className="w-[180px]">Timestamp</TableHead>
+                        <TableHead className="w-[120px]">Component</TableHead>
+                        <TableHead>Info Message</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {currentLogs.map((log: LogEntry, index: number) => (
                         <TableRow key={index}>
                           <TableCell className="font-mono text-xs">
                             {formatTimestamp(log.timestamp)}
@@ -922,26 +937,26 @@ const AdminDashboard = () => {
                           </TableCell>
                         </TableRow>
                       ))}
-                  </TableBody>
-                </Table>
-              </div>
-              
-              <PaginationControls filteredCount={filteredLogs.length} />
-            </TabsContent>
+                    </TableBody>
+                  </Table>
+                </div>
 
-            <TabsContent value="system">
-              <div className="rounded-md border">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead className="w-[180px]">Timestamp</TableHead>
-                      <TableHead className="w-[120px]">Component</TableHead>
-                      <TableHead className="w-[200px]">Trace ID</TableHead>
-                      <TableHead>System Message</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {currentLogs.map((log: LogEntry, index: number) => (
+                <PaginationControls filteredCount={filteredLogs.length} />
+              </TabsContent>
+
+              <TabsContent value="system">
+                <div className="rounded-md border">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead className="w-[180px]">Timestamp</TableHead>
+                        <TableHead className="w-[120px]">Component</TableHead>
+                        <TableHead className="w-[200px]">Trace ID</TableHead>
+                        <TableHead>System Message</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {currentLogs.map((log: LogEntry, index: number) => (
                         <TableRow key={index}>
                           <TableCell className="font-mono text-xs">
                             {formatTimestamp(log.timestamp)}
@@ -957,13 +972,13 @@ const AdminDashboard = () => {
                           </TableCell>
                         </TableRow>
                       ))}
-                  </TableBody>
-                </Table>
-              </div>
-              
-              <PaginationControls filteredCount={filteredLogs.length} />
-            </TabsContent>
-          </Tabs>
+                    </TableBody>
+                  </Table>
+                </div>
+
+                <PaginationControls filteredCount={filteredLogs.length} />
+              </TabsContent>
+            </Tabs>
           )}
         </CardContent>
       </Card>

@@ -12,10 +12,12 @@ import {
 import { SidebarTrigger } from '@/components/ui/sidebar';
 import { useAuth } from '@/contexts/AuthContext';
 import { LogOut, Moon, Settings, Sun } from 'lucide-react';
+import { useHeader } from '@/contexts/HeaderContext';
 
 const Header = () => {
   const { theme, setTheme } = useTheme();
   const { user, logout } = useAuth();
+  const { headerInfo } = useHeader();
 
   const toggleTheme = () => {
     setTheme(theme === 'light' ? 'dark' : 'light');
@@ -24,7 +26,26 @@ const Header = () => {
   return (
     <header className="flex h-16 shrink-0 items-center gap-2 border-b px-4">
       <SidebarTrigger className="-ml-1" />
-      <div className="flex-1" />
+
+      {/* Dynamic page info */}
+      <div className="flex-1 flex items-center gap-4">
+        {headerInfo && (
+          <>
+            <div className="min-w-0 flex-1">
+              <h1 className="text-lg font-semibold truncate">
+                {headerInfo.title}
+              </h1>
+              {headerInfo.description && (
+                <p className="text-xs text-muted-foreground">
+                  {headerInfo.description}
+                </p>
+              )}
+            </div>
+            {headerInfo.badge}
+            {headerInfo.extra}
+          </>
+        )}
+      </div>
 
       {/* User info with dropdown */}
       <div className="flex items-center gap-2">
@@ -32,7 +53,6 @@ const Header = () => {
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" className="relative h-8 w-8 rounded-full">
               <Avatar className="h-8 w-8">
-                {/* Bỏ thuộc tính avatar vì không tồn tại trong User type */}
                 <AvatarImage src={undefined} alt={user?.name} />
                 <AvatarFallback>
                   {user?.name?.charAt(0) || user?.email?.charAt(0) || 'U'}

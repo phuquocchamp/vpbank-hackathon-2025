@@ -76,6 +76,10 @@
   --sidebar-ring: oklch(0.704 0.04 256.788);
 }
 
+/* .scroll-area-viewport {
+  overflow-y: scroll !important;
+} */
+
 .dark {
   --background: oklch(0.2 0 0); /* zinc-900 */
   --foreground: oklch(0.98 0 0); /* zinc-50 */

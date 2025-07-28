@@ -1,7 +1,28 @@
 
 import ComingSoon from '@/components/common/ComingSoon';
+import { useHeader } from '@/contexts/HeaderContext';
+import { Badge } from '@/components/ui/badge';
+import { Home } from 'lucide-react';
+import { useEffect } from 'react';
 
 const Dashboard = () => {
+  const { setHeaderInfo } = useHeader();
+
+  useEffect(() => {
+    setHeaderInfo({
+      title: 'Dashboard',
+      description: 'Your personal financial overview',
+      badge: (
+        <Badge variant="outline" className="text-xs">
+          <Home className="size-3 mr-1" />
+          Coming Soon
+        </Badge>
+      )
+    });
+
+    return () => setHeaderInfo(null);
+  }, [setHeaderInfo]);
+
   return (
     <ComingSoon
       title="Personal Dashboard"
