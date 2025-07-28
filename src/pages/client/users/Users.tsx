@@ -1,7 +1,6 @@
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import ComingSoon from '@/components/common/ComingSoon';
-import { useHeader } from '@/contexts/HeaderContext';
 import { Badge } from '@/components/ui/badge';
+import { useHeader } from '@/contexts/HeaderContext';
 import { Users as UsersIcon } from 'lucide-react';
 import { useEffect } from 'react';
 

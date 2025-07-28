@@ -1,6 +1,6 @@
 import { createContext, useCallback, useContext, useReducer } from 'react';
-import { v4 as uuidv4 } from 'uuid';
 import { useNavigate } from 'react-router-dom';
+import { v4 as uuidv4 } from 'uuid';
 import { useAuth } from './AuthContext';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
@@ -123,8 +123,8 @@ export const ConversationProvider: React.FC<{ children: React.ReactNode }> = ({ 
   const [state, dispatch] = useReducer(conversationReducer, initialState);
   const { user, isLoading: authLoading } = useAuth();
 
-  const userId = user?.id;
-  const co_code_ld = user?.co_code_ld;
+  // const userId = user?.id;
+  // const co_code_ld = user?.co_code_ld;
   const isAdmin = user?.role === 'ADMIN';
 
   // Determine API endpoint based on user role

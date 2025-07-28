@@ -11,9 +11,9 @@ interface ComingSoonProps {
   expectedDate?: string;
 }
 
-const ComingSoon = ({ 
-  title, 
-  subtitle = "Exciting features coming your way", 
+const ComingSoon = ({
+  title,
+  subtitle = "Exciting features coming your way",
   description = "We're working hard to bring you amazing new features. Stay tuned for updates!",
   features = [],
   expectedDate = "Q1 2025"
@@ -88,19 +88,19 @@ const ComingSoon = ({
               <div className="relative overflow-hidden order-1 lg:order-2 lg:col-span-2 h-[300px] lg:h-auto">
                 {/* Very subtle overlay */}
                 <div className="absolute inset-0 bg-gradient-to-br from-blue-400/5 to-purple-600/5 z-10"></div>
-                <img 
-                  src="/comming-soon.png" 
-                  alt="Coming Soon" 
+                <img
+                  src="/comming-soon.png"
+                  alt="Coming Soon"
                   className="w-full h-full object-cover bg-gradient-to-br from-gray-50 to-gray-100"
                 />
-                
+
                 {/* Floating Elements - positioned better */}
                 <div className="absolute top-4 right-4 z-20">
                   <div className="w-10 h-10 lg:w-14 lg:h-14 bg-white/95 backdrop-blur-sm rounded-full flex items-center justify-center shadow-lg animate-bounce">
                     <Sparkles className="w-5 h-5 lg:w-7 lg:h-7 text-yellow-500" />
                   </div>
                 </div>
-                
+
                 <div className="absolute bottom-4 left-4 z-20">
                   <div className="bg-white/95 backdrop-blur-sm rounded-lg p-2 shadow-lg">
                     <div className="flex items-center gap-2 text-xs font-medium text-gray-800">
@@ -123,7 +123,7 @@ const ComingSoon = ({
               <div className="text-xs text-gray-600">Cutting-edge technology</div>
             </CardContent>
           </Card>
-          
+
           <Card className="bg-gradient-to-r from-purple-50 to-pink-50 border-purple-100">
             <CardContent className="p-6 text-center">
               <div className="text-2xl font-bold text-purple-600 mb-2">✨</div>
@@ -131,7 +131,7 @@ const ComingSoon = ({
               <div className="text-xs text-gray-600">Premium experience</div>
             </CardContent>
           </Card>
-          
+
           <Card className="bg-gradient-to-r from-green-50 to-emerald-50 border-green-100">
             <CardContent className="p-6 text-center">
               <div className="text-2xl font-bold text-green-600 mb-2">⚡</div>

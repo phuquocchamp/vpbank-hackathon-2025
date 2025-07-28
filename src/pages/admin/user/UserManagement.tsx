@@ -91,7 +91,7 @@ const UserManagement = () => {
   }, [setHeaderInfo, totalUsers]);
 
   const filteredUsers = users.filter(user =>
-    // user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
     user.role.toLowerCase().includes(searchTerm.toLowerCase()) ||
     (user.co_code_ld || '').toLowerCase().includes(searchTerm.toLowerCase())

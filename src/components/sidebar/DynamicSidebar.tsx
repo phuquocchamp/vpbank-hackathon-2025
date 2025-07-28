@@ -1,20 +1,20 @@
+import { Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent, SidebarGroupLabel, SidebarHeader, SidebarRail } from '@/components/ui/sidebar';
+import { menuItems } from '@/config/menu.items'; // Giả sử menuItems được tách ra file config
 import { useAuth } from '@/contexts/AuthContext';
 import { useConversation } from '@/contexts/ConversationContext';
-import { useEffect, useState } from 'react';
-import { Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent, SidebarGroupLabel, SidebarHeader, SidebarRail } from '@/components/ui/sidebar';
-import { toast } from 'sonner';
-import { CustomSidebarHeader } from './CustomSidebarHeader';
-import { ChatSection } from './ChatSection';
-import { MainNavigation } from './MainNavigation';
-import { ConversationHistory } from './ConversationHistory';
-import { EditTitleDialog } from './EditTitleDialog';
 import { useSidebarNavigation } from '@/hooks/useSidebarNavigation';
-import { menuItems } from '@/config/menu.items'; // Giả sử menuItems được tách ra file config
+import { useEffect, useState } from 'react';
+import { toast } from 'sonner';
+import { ChatSection } from './ChatSection';
+import { ConversationHistory } from './ConversationHistory';
+import { CustomSidebarHeader } from './CustomSidebarHeader';
+import { EditTitleDialog } from './EditTitleDialog';
+import { MainNavigation } from './MainNavigation';
 
 export function DynamicSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const { user } = useAuth();
   const { state, createNewConversation, loadConversations, deleteConversation, setCurrentConversation, updateConversationTitle } = useConversation();
-  const { getHomePath, navigateToConversation, navigateAfterDelete } = useSidebarNavigation();
+  const { navigateToConversation, navigateAfterDelete } = useSidebarNavigation();
 
   const [editingConversation, setEditingConversation] = useState<{ id: string; title: string } | null>(null);
   const [showEditDialog, setShowEditDialog] = useState(false);
