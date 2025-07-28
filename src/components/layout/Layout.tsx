@@ -9,7 +9,7 @@ const Layout = () => {
       <DynamicSidebar />
       <SidebarInset className="flex flex-col w-full min-w-0 h-screen">
         <Header />
-        <div className="flex flex-1 flex-col p-4 w-full min-w-0 overflow-hidden">
+        <div className="flex flex-1 flex-col p-4 w-full min-w-0 overflow-y-auto">
           <Outlet />
         </div>
       </SidebarInset>

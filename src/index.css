@@ -157,4 +157,30 @@
   .conversation-scroll-area::-webkit-scrollbar-thumb:hover {
     background: hsl(var(--border) / 0.8);
   }
+
+  /* Admin dashboard scrolling */
+  .admin-dashboard-container {
+    height: 100%;
+    overflow-y: auto;
+    scroll-behavior: smooth;
+  }
+
+  /* Improve scrollbar styling for all scrollable areas */
+  *::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  *::-webkit-scrollbar-track {
+    background: hsl(var(--background));
+  }
+
+  *::-webkit-scrollbar-thumb {
+    background: hsl(var(--border));
+    border-radius: 4px;
+  }
+
+  *::-webkit-scrollbar-thumb:hover {
+    background: hsl(var(--muted-foreground) / 0.5);
+  }
 }
