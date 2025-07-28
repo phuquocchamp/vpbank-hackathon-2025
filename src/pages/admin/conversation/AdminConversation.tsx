@@ -5,9 +5,9 @@ import { useHeader } from '@/contexts/HeaderContext';
 import { AlertCircle, Bot, MessageSquare } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { useParams } from 'react-router-dom';
-import { EmptyState } from './components/EmptyState';
-import { MessageInput } from './components/MessageInput';
-import { MessageItem } from './components/MessageItem';
+import { EmptyState } from '../../../components/conversation/EmptyState';
+import { MessageInput } from '../../../components/conversation/MessageInput';
+import { MessageItem } from '../../../components/conversation/MessageItem';
 
 const AdminConversation = () => {
   const { conversationId } = useParams<{ conversationId: string }>();
@@ -154,9 +154,9 @@ const AdminConversation = () => {
 
   return (
     <div className="conversation-container flex flex-col h-full bg-background">
-      <div className="flex-1 min-h-0 overflow-hidden">
+      <div className="flex-1 min-h-0 overflow-hidden relative">
         <ScrollArea className="conversation-scroll-area h-full">
-          <div className="p-4 space-y-3">
+          <div className="p-4 space-y-3 pb-32">
             {Array.isArray(state.currentConversation?.messages) && state.currentConversation.messages.length > 0 ? (
               <>
                 {state.currentConversation.messages.map((message) => (
@@ -180,17 +180,16 @@ const AdminConversation = () => {
                 </div>
               </div>
             )}
-            {/* Add padding at bottom for message input */}
-            <div className="h-24"></div>
           </div>
         </ScrollArea>
-      </div>
 
-      <div className="flex-shrink-0">
-        <MessageInput
-          onSendMessage={handleSendMessage}
-          disabled={state.loading}
-        />
+        {/* Floating message input */}
+        <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-background/95 via-background/80 to-transparent pt-8">
+          <MessageInput
+            onSendMessage={handleSendMessage}
+            disabled={state.loading}
+          />
+        </div>
       </div>
     </div>
   );

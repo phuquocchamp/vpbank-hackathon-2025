@@ -5,7 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { Home } from 'lucide-react';
 import { useEffect } from 'react';
 
-const Dashboard = () => {
+const ClientDashboard = () => {
   const { setHeaderInfo } = useHeader();
 
   useEffect(() => {
@@ -41,4 +41,4 @@ const Dashboard = () => {
   );
 };
 
-export default Dashboard;
+export default ClientDashboard;
