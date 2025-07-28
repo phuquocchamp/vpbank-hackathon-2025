@@ -20,7 +20,7 @@ export const MessageItem = ({
   executingQueries,
   onDownloadResults
 }: MessageItemProps) => {
-  const isUser = message.role === 'user';
+  const isUser = message.role !== 'assistant';
 
   return (
     <div className={cn("flex gap-3", isUser ? "justify-end" : "justify-start")}>
