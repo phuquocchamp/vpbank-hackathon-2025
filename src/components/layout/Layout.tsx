@@ -7,9 +7,9 @@ const Layout = () => {
   return (
     <SidebarProvider>
       <DynamicSidebar />
-      <SidebarInset className="flex flex-col w-full min-w-0">
+      <SidebarInset className="flex flex-col w-full min-w-0 h-screen">
         <Header />
-        <div className="flex flex-1 flex-col gap-4 p-4 w-full min-w-0 overflow-hidden">
+        <div className="flex flex-1 flex-col p-4 w-full min-w-0 overflow-hidden">
           <Outlet />
         </div>
       </SidebarInset>

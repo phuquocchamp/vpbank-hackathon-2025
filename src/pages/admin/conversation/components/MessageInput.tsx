@@ -1,7 +1,7 @@
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Send, Loader2 } from 'lucide-react';
-import { useState, KeyboardEvent } from 'react';
+import { useState, type KeyboardEvent } from 'react';
 
 interface MessageInputProps {
   onSendMessage: (message: string) => Promise<void>;
@@ -34,7 +34,7 @@ export const MessageInput = ({ onSendMessage, disabled }: MessageInputProps) => 
   };
 
   return (
-    <div className="sticky bottom-0 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-t border-border/40 p-4 flex-shrink-0 z-50 shadow-lg">
+    <div className="border-t border-border bg-background p-4">
       <div className="max-w-4xl mx-auto">
         <div className="flex gap-2 items-end bg-background border border-border/50 rounded-xl p-3 shadow-sm hover:shadow-md transition-shadow duration-200">
           <Textarea

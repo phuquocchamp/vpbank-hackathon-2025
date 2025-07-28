@@ -121,4 +121,16 @@
   body {
     @apply bg-background text-foreground;
   }
+  
+  /* Ensure proper scrolling for conversation area */
+  .conversation-scroll-area {
+    overflow-y: auto !important;
+    max-height: 100%;
+  }
+  
+  /* Prevent layout overflow */
+  .conversation-container {
+    height: 100%;
+    overflow: hidden;
+  }
 }

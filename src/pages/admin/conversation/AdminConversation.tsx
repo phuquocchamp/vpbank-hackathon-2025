@@ -58,7 +58,7 @@ const AdminConversation = () => {
       setHeaderInfo(null);
     };
   }, [state.currentConversation, conversationId, state.loading, setHeaderInfo]);
-  
+
   useEffect(() => {
     if (conversationId) {
       loadConversation(conversationId);
@@ -153,10 +153,10 @@ const AdminConversation = () => {
   }
 
   return (
-    <div className="flex flex-col h-screen bg-background">
-      <div className="flex-1 overflow-hidden">
-        <ScrollArea className="h-full">
-          <div className="p-4 pb-24 space-y-3">
+    <div className="conversation-container flex flex-col h-full bg-background">
+      <div className="flex-1 min-h-0 overflow-hidden">
+        <ScrollArea className="conversation-scroll-area h-full">
+          <div className="p-4 space-y-3">
             {Array.isArray(state.currentConversation?.messages) && state.currentConversation.messages.length > 0 ? (
               <>
                 {state.currentConversation.messages.map((message) => (
@@ -172,7 +172,7 @@ const AdminConversation = () => {
                 <div ref={messagesEndRef} />
               </>
             ) : (
-              <div className="flex items-center justify-center h-32">
+              <div className="flex items-center justify-center min-h-[200px]">
                 <div className="text-center text-muted-foreground">
                   <Bot className="size-8 mx-auto mb-2 opacity-50" />
                   <p>No messages yet</p>
@@ -180,14 +180,18 @@ const AdminConversation = () => {
                 </div>
               </div>
             )}
+            {/* Add padding at bottom for message input */}
+            <div className="h-24"></div>
           </div>
         </ScrollArea>
       </div>
 
-      <MessageInput
-        onSendMessage={handleSendMessage}
-        disabled={state.loading}
-      />
+      <div className="flex-shrink-0">
+        <MessageInput
+          onSendMessage={handleSendMessage}
+          disabled={state.loading}
+        />
+      </div>
     </div>
   );
 };
