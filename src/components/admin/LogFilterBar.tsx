@@ -55,24 +55,24 @@ const LogFilterBar = ({ logs, filters, onFiltersChange, onClearFilters }: LogFil
   };
 
   return (
-    <Card className="mb-6 bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-200">
+    <Card className="mb-6 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-950 dark:to-indigo-950 border-blue-200 dark:border-blue-800">
       <CardContent className="p-6">
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-3">
-            <div className="p-2 bg-blue-100 rounded-lg">
-              <Filter className="h-5 w-5 text-blue-600" />
+            <div className="p-2 bg-blue-100 dark:bg-blue-900 rounded-lg">
+              <Filter className="h-5 w-5 text-blue-600 dark:text-blue-400" />
             </div>
             <div>
-              <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 flex items-center gap-2">
                 Filter System Logs
                 {activeFiltersCount > 0 && (
-                  <Badge variant="secondary" className="bg-blue-100 text-blue-800">
+                  <Badge variant="secondary" className="bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200">
                     {activeFiltersCount} active
                   </Badge>
                 )}
               </h3>
-              <p className="text-sm text-gray-600">Refine your search to find specific logs</p>
+              <p className="text-sm text-gray-600 dark:text-gray-400">Refine your search to find specific logs</p>
             </div>
           </div>
           
@@ -81,7 +81,7 @@ const LogFilterBar = ({ logs, filters, onFiltersChange, onClearFilters }: LogFil
               variant="outline"
               size="sm"
               onClick={onClearFilters}
-              className="bg-white hover:bg-gray-50 border-gray-300 text-red-600 hover:text-red-700"
+              className="bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 border-gray-300 dark:border-gray-600 text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300"
             >
               <X className="h-4 w-4 mr-2" />
               Clear All Filters
@@ -93,8 +93,8 @@ const LogFilterBar = ({ logs, filters, onFiltersChange, onClearFilters }: LogFil
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
           {/* Date From Filter */}
           <div className="space-y-3">
-            <Label htmlFor="dateFrom" className="text-sm font-semibold text-gray-700 flex items-center gap-2">
-              <Calendar className="h-4 w-4 text-blue-600" />
+            <Label htmlFor="dateFrom" className="text-sm font-semibold text-gray-700 dark:text-gray-300 flex items-center gap-2">
+              <Calendar className="h-4 w-4 text-blue-600 dark:text-blue-400" />
               From Date
             </Label>
             <Input
@@ -108,8 +108,8 @@ const LogFilterBar = ({ logs, filters, onFiltersChange, onClearFilters }: LogFil
 
           {/* Date To Filter */}
           <div className="space-y-3">
-            <Label htmlFor="dateTo" className="text-sm font-semibold text-gray-700 flex items-center gap-2">
-              <Calendar className="h-4 w-4 text-blue-600" />
+            <Label htmlFor="dateTo" className="text-sm font-semibold text-gray-700 dark:text-gray-300 flex items-center gap-2">
+              <Calendar className="h-4 w-4 text-blue-600 dark:text-blue-400" />
               To Date
             </Label>
             <Input
@@ -123,8 +123,8 @@ const LogFilterBar = ({ logs, filters, onFiltersChange, onClearFilters }: LogFil
 
           {/* Service Filter */}
           <div className="space-y-3">
-            <Label htmlFor="service" className="text-sm font-semibold text-gray-700 flex items-center gap-2">
-              <Server className="h-4 w-4 text-green-600" />
+            <Label htmlFor="service" className="text-sm font-semibold text-gray-700 dark:text-gray-300 flex items-center gap-2">
+              <Server className="h-4 w-4 text-green-600 dark:text-green-400" />
               Service
             </Label>
             <div className="relative">
@@ -146,8 +146,8 @@ const LogFilterBar = ({ logs, filters, onFiltersChange, onClearFilters }: LogFil
 
           {/* User Filter */}
           <div className="space-y-3">
-            <Label htmlFor="user" className="text-sm font-semibold text-gray-700 flex items-center gap-2">
-              <User className="h-4 w-4 text-purple-600" />
+            <Label htmlFor="user" className="text-sm font-semibold text-gray-700 dark:text-gray-300 flex items-center gap-2">
+              <User className="h-4 w-4 text-purple-600 dark:text-purple-400" />
               User
             </Label>
             <div className="relative">

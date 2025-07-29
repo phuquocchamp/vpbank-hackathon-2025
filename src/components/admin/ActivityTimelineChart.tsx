@@ -56,7 +56,7 @@ const ActivityTimelineChart = ({ validLogs }: ActivityTimelineChartProps) => {
   };
 
   return (
-    <Card className="md:col-span-2 xl:col-span-2">
+    <Card className="lg:col-span-1">
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <TrendingUp className="h-5 w-5" />
@@ -66,7 +66,7 @@ const ActivityTimelineChart = ({ validLogs }: ActivityTimelineChartProps) => {
           Last 12 hours trend
         </p>
       </CardHeader>
-      <CardContent>
+      <CardContent className="min-h-[280px]">
         <ChartContainer config={chartConfig} className="aspect-[4/3] w-full max-h-[280px]">
           <AreaChart data={getTimelineChartData()}>
             <defs>
