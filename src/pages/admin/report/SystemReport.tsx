@@ -2,10 +2,9 @@ import { useState, useEffect } from 'react';
 import { useAdminData } from '@/hooks/useAdminData';
 import { useHeader } from '@/contexts/HeaderContext';
 import { Badge } from '@/components/ui/badge';
-import { FileText, BarChart3, DollarSign, Target } from 'lucide-react';
-import BillingChart from '@/components/admin/BillingChart';
+import { FileText, BarChart3, Target } from 'lucide-react';
 import SystemLogsTable from '@/components/admin/SystemLogsTable';
-import TaskTracking from '@/components/admin/TaskTracking';
+import TaskTracking from '@/components/common/TaskTracking';
 import { useAuth } from '@/contexts/AuthContext';
 
 const SystemReport = () => {
@@ -22,10 +21,6 @@ const SystemReport = () => {
     isLoadingLogs,
     logError,
     fetchLogs,
-    billingData,
-    isLoadingBilling,
-    billingError,
-    fetchBilling,
   } = useAdminData();
 
   const { user } = useAuth();
@@ -37,7 +32,7 @@ const SystemReport = () => {
   useEffect(() => {
     setHeaderInfo({
       title: 'System Reports',
-      description: 'Comprehensive system analytics, billing trends, and task monitoring',
+      description: 'Comprehensive system analytics and task monitoring',
       badge: (
         <Badge variant="outline" className="text-xs">
           <FileText className="size-3 mr-1" />
@@ -64,7 +59,7 @@ const SystemReport = () => {
   return (
     <div className="space-y-6 system-report-container">
       {/* Report Overview Section */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 lg:gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 lg:gap-6">
         <div className="bg-gradient-to-r from-blue-50 to-blue-100 dark:from-blue-950/50 dark:to-blue-900/50 p-6 rounded-lg border border-blue-200 dark:border-blue-800">
           <div className="flex items-center justify-between">
             <div>
@@ -73,19 +68,6 @@ const SystemReport = () => {
               <p className="text-xs text-blue-600 dark:text-blue-400">Total events tracked</p>
             </div>
             <FileText className="h-8 w-8 text-blue-600 dark:text-blue-400" />
-          </div>
-        </div>
-
-        <div className="bg-gradient-to-r from-green-50 to-green-100 dark:from-green-950/50 dark:to-green-900/50 p-6 rounded-lg border border-green-200 dark:border-green-800">
-          <div className="flex items-center justify-between">
-            <div>
-              <h3 className="text-sm font-medium text-green-700 dark:text-green-300">Billing Trends</h3>
-              <p className="text-2xl font-bold text-green-900 dark:text-green-100">
-                {billingData && billingData.length > 0 ? `$${billingData[billingData.length - 1]?.cost || 0}` : '$0'}
-              </p>
-              <p className="text-xs text-green-600 dark:text-green-400">Current month</p>
-            </div>
-            <DollarSign className="h-8 w-8 text-green-600 dark:text-green-400" />
           </div>
         </div>
 
@@ -99,20 +81,6 @@ const SystemReport = () => {
             <Target className="h-8 w-8 text-purple-600 dark:text-purple-400" />
           </div>
         </div>
-      </div>
-
-      {/* Financial Reports Section */}
-      <div className="space-y-4">
-        <div className="flex items-center gap-2">
-          <DollarSign className="h-5 w-5 text-green-600 dark:text-green-400" />
-          <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Financial Reports</h2>
-        </div>
-        <BillingChart
-          billingData={billingData}
-          isLoadingBilling={isLoadingBilling}
-          billingError={billingError}
-          onRefresh={fetchBilling}
-        />
       </div>
 
       {/* Task Management Reports Section */}
