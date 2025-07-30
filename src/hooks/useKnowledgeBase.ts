@@ -79,21 +79,6 @@ export const useKnowledgeBase = () => {
     }
   };
 
-  // Convert file to base64
-  const convertFileToBase64 = (file: File): Promise<string> => {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.readAsDataURL(file);
-      reader.onload = () => {
-        const base64String = reader.result as string;
-        // Remove data:type;base64, prefix
-        const base64 = base64String.split(',')[1];
-        resolve(base64);
-      };
-      reader.onerror = (error) => reject(error);
-    });
-  };
-
   // Validate file before upload
   const validateFile = (file: File): { isValid: boolean; error?: string } => {
     const maxSize = 10 * 1024 * 1024; // 10MB
@@ -136,25 +121,21 @@ export const useKnowledgeBase = () => {
 
     try {
       const token = getAuthToken();
-      const headers: HeadersInit = {
-        'Content-Type': 'application/json',
-      };
+      const formData = new FormData();
+      
+      formData.append('title', title.trim());
+      formData.append('description', description.trim());
+
+      const headers: HeadersInit = {};
       
       if (token) {
         headers['Authorization'] = `Bearer ${token}`;
       }
 
-      const payload = {
-        title: title.trim(),
-        description: description.trim(),
-        file: "",
-        fileName: null
-      };
-
       const response = await fetch(`${BASE_URL}/admin/knowledge-bases`, {
         method: 'POST',
         headers,
-        body: JSON.stringify(payload)
+        body: formData
       });
 
       if (!response.ok) {
@@ -187,34 +168,40 @@ export const useKnowledgeBase = () => {
     setUploadProgress({ loaded: 0, total: file.size, percentage: 0 });
 
     try {
-      const base64File = await convertFileToBase64(file);
-      
       const token = getAuthToken();
-      const headers: HeadersInit = {
-        'Content-Type': 'application/json',
-      };
+      const formData = new FormData();
+      
+      // Append form data according to API specification
+      formData.append('file', file);
+      formData.append('title', title?.trim() || file.name);
+      formData.append('description', description?.trim() || `Uploaded file: ${file.name}`);
+
+      const headers: HeadersInit = {};
       
       if (token) {
         headers['Authorization'] = `Bearer ${token}`;
       }
 
-      const payload = {
-        title: title?.trim() || file.name,
-        description: description?.trim() || `Uploaded file: ${file.name}`,
-        file: base64File,
-        fileName: file.name,
-        metadata: {
-          fileSize: file.size,
-          fileType: file.type,
-          lastModified: file.lastModified
-        }
-      };
+      // Simulate upload progress
+      const progressInterval = setInterval(() => {
+        setUploadProgress(prev => {
+          if (!prev) return { loaded: 0, total: file.size, percentage: 0 };
+          const newLoaded = Math.min(prev.loaded + file.size * 0.1, file.size * 0.9);
+          return {
+            loaded: newLoaded,
+            total: file.size,
+            percentage: (newLoaded / file.size) * 100
+          };
+        });
+      }, 200);
 
       const response = await fetch(`${BASE_URL}/admin/knowledge-bases`, {
         method: 'POST',
         headers,
-        body: JSON.stringify(payload)
+        body: formData
       });
+
+      clearInterval(progressInterval);
 
       if (!response.ok) {
         if (response.status === 401) {

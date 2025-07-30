@@ -1,6 +1,7 @@
 import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Database } from 'lucide-react'
+import { Alert, AlertDescription } from "@/components/ui/alert"
+import { Database, Info } from 'lucide-react'
 import { useEffect } from 'react'
 import { useHeader } from '@/contexts/HeaderContext'
 import { useKnowledgeBase } from '@/hooks/useKnowledgeBase'
@@ -28,8 +29,8 @@ const KnowledgeBase = () => {
   // Set header info for knowledge base page
   useEffect(() => {
     setHeaderInfo({
-      title: 'Knowledge Base',
-      description: 'Manage and organize knowledge assets',
+      title: 'Knowledge Base Management',
+      description: 'Upload and manage your organization\'s knowledge assets',
       badge: (
         <Badge variant="outline" className="text-xs">
           <Database className="size-3 mr-1" />
@@ -93,6 +94,16 @@ const KnowledgeBase = () => {
 
   return (
     <div className="space-y-6">
+      {/* Information Alert */}
+      <Alert>
+        <Info className="h-4 w-4" />
+        <AlertDescription>
+          Knowledge Base supports two upload methods: <strong>Text Knowledge</strong> for direct input of business rules,
+          and <strong>File Upload</strong> for documents (PDF, DOC, DOCX, TXT, CSV, XLSX).
+          All uploads are processed using form-data format as specified in the API.
+        </AlertDescription>
+      </Alert>
+
       <Tabs defaultValue="add" className="w-full">
         <TabsList className="grid w-full grid-cols-2">
           <TabsTrigger value="add">Add Knowledge</TabsTrigger>
