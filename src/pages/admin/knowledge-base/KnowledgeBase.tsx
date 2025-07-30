@@ -1,16 +1,19 @@
-import { Badge } from "@/components/ui/badge"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Alert, AlertDescription } from "@/components/ui/alert"
-import { Database, Info } from 'lucide-react'
-import { useEffect } from 'react'
-import { useHeader } from '@/contexts/HeaderContext'
-import { useKnowledgeBase } from '@/hooks/useKnowledgeBase'
+// import KnowledgeContentViewer from '@/components/admin/KnowledgeContentViewer'
 import KnowledgeForm from '@/components/admin/KnowledgeForm'
 import KnowledgeList from '@/components/admin/KnowledgeList'
+import { Alert, AlertDescription } from "@/components/ui/alert"
+import { Badge } from "@/components/ui/badge"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { useHeader } from '@/contexts/HeaderContext'
+import type { KnowledgeBaseItem } from '@/hooks/useKnowledgeBase'
+import { useKnowledgeBase } from '@/hooks/useKnowledgeBase'
+import { Database, Info } from 'lucide-react'
+import { useEffect } from 'react'
 import { toast } from 'sonner'
 
 const KnowledgeBase = () => {
   const { setHeaderInfo } = useHeader();
+
   const {
     knowledgeItems,
     loading,
@@ -24,6 +27,8 @@ const KnowledgeBase = () => {
     fetchKnowledgeBase,
     getFileTypeFromMetadata,
     formatFileSize,
+    downloadKnowledgeFile,
+    getPreviewUrl,
   } = useKnowledgeBase();
 
   // Set header info for knowledge base page
@@ -92,6 +97,45 @@ const KnowledgeBase = () => {
     }
   };
 
+  // Handle view content
+  const handleViewContent = (item: KnowledgeBaseItem) => {
+    // For now, just show a toast with the content
+    toast.info('View Content', {
+      description: `Title: ${item.title}`,
+      duration: 3000,
+    });
+  };
+
+  // Handle download file
+  const handleDownload = async (id: string) => {
+    const item = knowledgeItems.find(item => item.knowledgebaseId === id);
+    if (!item) return;
+
+    try {
+      await downloadKnowledgeFile(id, item.fileName || 'knowledge.txt');
+      // No toast notification - silent download
+    } catch (error) {
+      toast.error('Download failed', {
+        description: error instanceof Error ? error.message : 'Please try again later.',
+        duration: 4000,
+      });
+    }
+  };
+
+  // Handle preview file
+  const handlePreview = async (id: string) => {
+    try {
+      await getPreviewUrl(id);
+      // URL is automatically opened in new tab by getPreviewUrl function
+    } catch (error) {
+      toast.error('Preview failed', {
+        description: error instanceof Error ? error.message : 'Unable to open preview. Please try again later.',
+        duration: 4000,
+      });
+    }
+  };
+
+
   return (
     <div className="space-y-6">
       {/* Information Alert */}
@@ -126,6 +170,9 @@ const KnowledgeBase = () => {
             loading={loading}
             error={error}
             onDelete={handleDelete}
+            onDownload={handleDownload}
+            onViewContent={handleViewContent}
+            onPreview={handlePreview}
             onRefresh={fetchKnowledgeBase}
             isDeleting={isDeleting}
             formatFileSize={formatFileSize}
@@ -133,6 +180,7 @@ const KnowledgeBase = () => {
           />
         </TabsContent>
       </Tabs>
+
     </div>
   )
 }

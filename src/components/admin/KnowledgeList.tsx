@@ -22,6 +22,8 @@ interface KnowledgeListProps {
   error: string | null;
   onDelete: (id: string) => void;
   onDownload?: (id: string) => void;
+  onViewContent?: (item: KnowledgeBaseItem) => void;
+  onPreview?: (id: string) => void;
   onRefresh: () => void;
   isDeleting: string | null;
   formatFileSize: (bytes: number) => string;
@@ -37,6 +39,8 @@ const KnowledgeList = ({
   error,
   onDelete,
   onDownload,
+  onViewContent,
+  onPreview,
   onRefresh,
   isDeleting,
   formatFileSize,
@@ -282,6 +286,8 @@ const KnowledgeList = ({
               item={item}
               onDelete={onDelete}
               onDownload={onDownload}
+              onViewContent={onViewContent}
+              onPreview={onPreview}
               isDeleting={isDeleting === item.knowledgebaseId}
               formatFileSize={formatFileSize}
               getFileType={getFileType}

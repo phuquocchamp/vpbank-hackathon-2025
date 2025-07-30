@@ -276,6 +276,136 @@ export const useKnowledgeBase = () => {
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
   };
 
+  // Get knowledge content for viewing
+  const getKnowledgeContent = async (id: string) => {
+    try {
+      const token = getAuthToken();
+      const headers: HeadersInit = {
+        'Content-Type': 'application/json',
+      };
+      
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+
+      const response = await fetch(`${BASE_URL}/admin/knowledge-bases/${id}/content`, {
+        method: 'GET',
+        headers,
+      });
+
+      if (!response.ok) {
+        if (response.status === 401) {
+          throw new Error('Authentication failed. Please login again.');
+        }
+        throw new Error(`Failed to get content: ${response.status}`);
+      }
+
+      const data = await response.json();
+      return data;
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to get content';
+      throw new Error(errorMessage);
+    }
+  };
+
+  // Download knowledge file
+  const downloadKnowledgeFile = async (id: string, fileName: string) => {
+    try {
+      const token = getAuthToken();
+      const headers: HeadersInit = {};
+      
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+
+      const response = await fetch(`${BASE_URL}/admin/knowledge-bases/${id}`, {
+        method: 'GET',
+        headers,
+      });
+
+      if (!response.ok) {
+        if (response.status === 401) {
+          throw new Error('Authentication failed. Please login again.');
+        }
+        throw new Error(`Failed to download file: ${response.status}`);
+      }
+
+      // Parse JSON response to get downloadUrl
+      const data = await response.json();
+      
+      if (!data.downloadUrl) {
+        throw new Error('Download URL not available');
+      }
+
+      // Create link element and trigger download using downloadUrl
+      const link = document.createElement('a');
+      link.href = data.downloadUrl;
+      link.download = fileName;
+      
+      // Trigger download without opening new tab
+      link.style.display = 'none';
+      document.body.appendChild(link);
+      
+      // Use a promise to wait for the click to be processed
+      return new Promise((resolve, reject) => {
+        // Set up a timer to resolve after a short delay
+        const timer = setTimeout(() => {
+          document.body.removeChild(link);
+          resolve(data);
+        }, 300);
+        
+        // Clean up if something goes wrong
+        try {
+          link.click();
+        } catch (error) {
+          clearTimeout(timer);
+          document.body.removeChild(link);
+          reject(error);
+        }
+      });
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to download file';
+      throw new Error(errorMessage);
+    }
+  };
+
+  // Get preview URL for file
+  const getPreviewUrl = async (id: string) => {
+    try {
+      const token = getAuthToken();
+      const headers: HeadersInit = {};
+      
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+
+      const response = await fetch(`${BASE_URL}/admin/knowledge-bases/${id}`, {
+        method: 'GET',
+        headers,
+      });
+
+      if (!response.ok) {
+        if (response.status === 401) {
+          throw new Error('Authentication failed. Please login again.');
+        }
+        throw new Error(`Failed to get preview URL: ${response.status}`);
+      }
+
+      const data = await response.json();
+      
+      if (!data.downloadUrl) {
+        throw new Error('Preview URL not available');
+      }
+
+      // Open the preview URL in a new tab
+      window.open(data.downloadUrl, '_blank');
+      return data.downloadUrl;
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to get preview URL';
+      throw new Error(errorMessage);
+    }
+  };
+
   // Initialize data on mount
   useEffect(() => {
     fetchKnowledgeBase();
@@ -295,6 +425,9 @@ export const useKnowledgeBase = () => {
     addTextKnowledge,
     uploadFileKnowledge,
     deleteKnowledgeItem,
+    getKnowledgeContent,
+    downloadKnowledgeFile,
+    getPreviewUrl,
     
     // Utilities
     getFileTypeFromMetadata,

@@ -163,5 +163,74 @@ export const knowledgeBaseService = {
   // Get file type from metadata
   getFileType(item: KnowledgeBaseItem): string {
     return item.metadata.fileType || 'file';
+  },
+
+  // View knowledge base content
+  async getContent(id: string): Promise<{ content: string; contentType: string; fileName: string }> {
+    const response = await fetch(`${BASE_URL}/admin/knowledge-bases/${id}/content`, {
+      method: 'GET',
+      headers: createHeaders(true),
+    });
+
+    if (!response.ok) {
+      if (response.status === 401) {
+        throw new Error('Authentication failed. Please login again.');
+      }
+      const errorText = await response.text();
+      throw new Error(`Failed to get content: ${response.status} - ${errorText}`);
+    }
+
+    const data = await response.json();
+    return data;
+  },
+
+  // Download knowledge base file
+  async downloadFile(id: string, fileName: string): Promise<{ message: string; downloadUrl: string }> {
+    const response = await fetch(`${BASE_URL}/admin/knowledge-bases/${id}`, {
+      method: 'GET',
+      headers: createHeaders(),
+    });
+
+    if (!response.ok) {
+      if (response.status === 401) {
+        throw new Error('Authentication failed. Please login again.');
+      }
+      const errorText = await response.text();
+      throw new Error(`Failed to download file: ${response.status} - ${errorText}`);
+    }
+
+    // Parse JSON response to get downloadUrl
+    const data = await response.json();
+    
+    if (!data.downloadUrl) {
+      throw new Error('Download URL not available');
+    }
+
+    // Create link element and trigger download using downloadUrl
+    const link = document.createElement('a');
+    link.href = data.downloadUrl;
+    link.download = fileName;
+    
+    // Trigger download without opening new tab
+    link.style.display = 'none';
+    document.body.appendChild(link);
+    
+    // Use a promise to wait for the click to be processed
+    return new Promise((resolve, reject) => {
+      // Set up a timer to resolve after a short delay
+      const timer = setTimeout(() => {
+        document.body.removeChild(link);
+        resolve(data);
+      }, 300);
+      
+      // Clean up if something goes wrong
+      try {
+        link.click();
+      } catch (error) {
+        clearTimeout(timer);
+        document.body.removeChild(link);
+        reject(error);
+      }
+    });
   }
 };
