@@ -8,4 +8,16 @@ export { default as PaginationControls } from './PaginationControls';
 export { default as LogTableRow } from './LogTableRow';
 export { LogTableHeader } from './LogTableRow';
 export { default as LogFilterBar } from './LogFilterBar';
+
+export { default as FileUpload } from './FileUpload';
+export { default as KnowledgeForm } from './KnowledgeForm';
+export { default as KnowledgeItemCard } from './KnowledgeItemCard';
+export { default as KnowledgeList } from './KnowledgeList';
+
+// User Management Components
+export { CreateUserDialog } from './CreateUserDialog';
+export { EditUserDialog } from './EditUserDialog';
+export { DeleteUserDialog } from './DeleteUserDialog';
+
 export { default as TaskTracking } from '../common/TaskTracking';
+

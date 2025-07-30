@@ -1,58 +1,41 @@
+// import KnowledgeContentViewer from '@/components/admin/KnowledgeContentViewer'
+import KnowledgeForm from '@/components/admin/KnowledgeForm'
+import KnowledgeList from '@/components/admin/KnowledgeList'
+import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Textarea } from "@/components/ui/textarea"
-import { FileText, Trash2, Upload, Database } from 'lucide-react'
-import { useEffect, useState } from 'react'
 import { useHeader } from '@/contexts/HeaderContext'
-
-interface KnowledgeBaseItem {
-  knowledgebaseId: string
-  title: string
-  description: string
-  fileName: string
-  createdAt: string
-  updatedAt: string
-  metadata: {
-    bucket: string
-    key: string
-    fileType?: string
-  }
-}
-
-interface ApiResponse {
-  message: string
-  items: KnowledgeBaseItem[]
-}
-
-const BASE_URL = import.meta.env.VITE_API_BASE_URL;
+import type { KnowledgeBaseItem } from '@/hooks/useKnowledgeBase'
+import { useKnowledgeBase } from '@/hooks/useKnowledgeBase'
+import { Database, Info } from 'lucide-react'
+import { useEffect } from 'react'
+import { toast } from 'sonner'
 
 const KnowledgeBase = () => {
   const { setHeaderInfo } = useHeader();
-  const [knowledgeItems, setKnowledgeItems] = useState<KnowledgeBaseItem[]>([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
-  const [newKnowledgeText, setNewKnowledgeText] = useState('')
-  const [newKnowledgeTitle, setNewKnowledgeTitle] = useState('')
-  // const [selectedFile, setSelectedFile] = useState<File | null>(null)
-  // const [editingId, setEditingId] = useState<string | null>(null)
-  // const [editTitle, setEditTitle] = useState('')
-  // const [editContent, setEditContent] = useState('')
-  const [isAdding, setIsAdding] = useState(false)
-  const [isDeleting, setIsDeleting] = useState<string | null>(null)
 
-  useEffect(() => {
-    fetchKnowledgeBase()
-  }, [])
+  const {
+    knowledgeItems,
+    loading,
+    error,
+    isAdding,
+    isDeleting,
+    uploadProgress,
+    addTextKnowledge,
+    uploadFileKnowledge,
+    deleteKnowledgeItem,
+    fetchKnowledgeBase,
+    getFileTypeFromMetadata,
+    formatFileSize,
+    downloadKnowledgeFile,
+    getPreviewUrl,
+  } = useKnowledgeBase();
 
   // Set header info for knowledge base page
   useEffect(() => {
     setHeaderInfo({
-      title: 'Knowledge Base',
-      description: 'Manage and organize knowledge assets',
+      title: 'Knowledge Base Management',
+      description: 'Upload and manage your organization\'s knowledge assets',
       badge: (
         <Badge variant="outline" className="text-xs">
           <Database className="size-3 mr-1" />
@@ -64,198 +47,107 @@ const KnowledgeBase = () => {
     return () => setHeaderInfo(null);
   }, [setHeaderInfo, knowledgeItems.length]);
 
-  const fetchKnowledgeBase = async () => {
+  // Handle text knowledge submission
+  const handleSubmitText = async (title: string, description: string) => {
     try {
-      setLoading(true)
-      const response = await fetch(`${BASE_URL}/admin/knowledge-bases`)
-      if (!response.ok) {
-        throw new Error('Failed to fetch knowledge base')
-      }
-      const data: ApiResponse = await response.json()
-      setKnowledgeItems(data.items)
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'An error occurred')
-    } finally {
-      setLoading(false)
+      await addTextKnowledge(title, description);
+      toast.success('Knowledge added successfully!', {
+        description: 'The text knowledge has been saved to your database.',
+        duration: 4000,
+      });
+    } catch (error) {
+      toast.error('Failed to add knowledge', {
+        description: error instanceof Error ? error.message : 'Please try again later.',
+        duration: 4000,
+      });
+      throw error; // Re-throw to let the form handle it
     }
-  }
+  };
 
-  const convertFileToBase64 = (file: File): Promise<string> => {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader()
-      reader.readAsDataURL(file)
-      reader.onload = () => {
-        const base64String = reader.result as string
-        // Remove data:type;base64, prefix
-        const base64 = base64String.split(',')[1]
-        resolve(base64)
-      }
-      reader.onerror = (error) => reject(error)
-    })
-  }
-
-  const handleAddTextKnowledge = async () => {
-    if (!newKnowledgeTitle || !newKnowledgeText) return
-
-    setIsAdding(true)
+  // Handle file upload
+  const handleSubmitFile = async (file: File, title?: string, description?: string) => {
     try {
-      const payload = {
-        title: newKnowledgeTitle,
-        description: newKnowledgeText,
-        file: "",
-        fileName: null
-      }
-
-      const response = await fetch(`${BASE_URL}/admin/knowledge-bases`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(payload)
-      })
-
-      if (!response.ok) {
-        throw new Error('Failed to add knowledge base')
-      }
-
-      // Refresh the knowledge base list
-      await fetchKnowledgeBase()
-
-      // Reset form
-      setNewKnowledgeTitle('')
-      setNewKnowledgeText('')
-      setError(null)
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to add knowledge base')
-    } finally {
-      setIsAdding(false)
+      await uploadFileKnowledge(file, title, description);
+      toast.success('File uploaded successfully!', {
+        description: `${file.name} has been processed and added to your knowledge base.`,
+        duration: 4000,
+      });
+    } catch (error) {
+      toast.error('Failed to upload file', {
+        description: error instanceof Error ? error.message : 'Please try again later.',
+        duration: 4000,
+      });
+      throw error; // Re-throw to let the form handle it
     }
-  }
+  };
 
-  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0]
-    if (!file) return
-
-    setIsAdding(true)
-    try {
-      const base64File = await convertFileToBase64(file)
-
-      const payload = {
-        title: newKnowledgeTitle || file.name,
-        description: newKnowledgeText || `Uploaded file: ${file.name}`,
-        file: base64File,
-        fileName: file.name
-      }
-
-      const response = await fetch(`${BASE_URL}/admin/knowledge-bases`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(payload)
-      })
-
-      if (!response.ok) {
-        throw new Error('Failed to upload file')
-      }
-
-      // Refresh the knowledge base list
-      await fetchKnowledgeBase()
-
-      // Reset form
-      setNewKnowledgeTitle('')
-      setNewKnowledgeText('')
-      // setSelectedFile(null)
-      event.target.value = ''
-      setError(null)
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to upload file')
-    } finally {
-      setIsAdding(false)
-    }
-  }
-
-  // const handleDownload = async (id: string) => {
-  //   const item = knowledgeItems.find(kb => kb.knowledgebaseId === id)
-  //   if (!item) return
-
-  //   try {
-  //     const response = await fetch(`${BASE_URL}/admin/knowledge-bases/${id}/download`, {
-  //       method: 'GET',
-  //     })
-
-  //     if (!response.ok) {
-  //       throw new Error('Failed to download file')
-  //     }
-
-  //     const blob = await response.blob()
-  //     const url = window.URL.createObjectURL(blob)
-  //     const link = document.createElement('a')
-  //     link.href = url
-  //     link.download = item.fileName || item.title
-  //     document.body.appendChild(link)
-  //     link.click()
-  //     document.body.removeChild(link)
-  //     window.URL.revokeObjectURL(url)
-  //   } catch (error) {
-  //     console.error('Download failed:', error)
-  //     setError('Failed to download file')
-  //   }
-  // }
-
-
+  // Handle knowledge deletion
   const handleDelete = async (id: string) => {
-    setIsDeleting(id)
     try {
-      const response = await fetch(`${BASE_URL}/admin/knowledge-bases/${id}/delete`, {
-        method: 'DELETE',
-      })
-
-      if (!response.ok) {
-        throw new Error('Failed to delete knowledge base')
-      }
-
-      // Remove item from local state
-      setKnowledgeItems(knowledgeItems.filter(item => item.knowledgebaseId !== id))
-      setError(null)
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to delete knowledge base')
-    } finally {
-      setIsDeleting(null)
+      await deleteKnowledgeItem(id);
+      toast.success('Knowledge deleted successfully!', {
+        description: 'The item has been removed from your knowledge base.',
+        duration: 3000,
+      });
+    } catch (error) {
+      toast.error('Failed to delete knowledge', {
+        description: error instanceof Error ? error.message : 'Please try again later.',
+        duration: 4000,
+      });
     }
-  }
+  };
 
-  // const handleEdit = (item: KnowledgeBaseItem) => {
-  //   // setEditingId(item.knowledgebaseId)
-  //   // setEditTitle(item.title)
-  //   // setEditContent(item.description)
-  // }
+  // Handle view content
+  const handleViewContent = (item: KnowledgeBaseItem) => {
+    // For now, just show a toast with the content
+    toast.info('View Content', {
+      description: `Title: ${item.title}`,
+      duration: 3000,
+    });
+  };
 
-  // const handleSaveEdit = () => {
-  //   if (editingId) {
-  //     setKnowledgeItems(knowledgeItems.map(item =>
-  //       item.knowledgebaseId === editingId
-  //         ? { ...item, title: editTitle, description: editContent }
-  //         : item
-  //     ))
-  //     setEditingId(null)
-  //     setEditTitle('')
-  //     setEditContent('')
-  //   }
-  // }
+  // Handle download file
+  const handleDownload = async (id: string) => {
+    const item = knowledgeItems.find(item => item.knowledgebaseId === id);
+    if (!item) return;
 
-  // const handleCancelEdit = () => {
-  //   setEditingId(null)
-  //   setEditTitle('')
-  //   setEditContent('')
-  // }
+    try {
+      await downloadKnowledgeFile(id, item.fileName || 'knowledge.txt');
+      // No toast notification - silent download
+    } catch (error) {
+      toast.error('Download failed', {
+        description: error instanceof Error ? error.message : 'Please try again later.',
+        duration: 4000,
+      });
+    }
+  };
 
-  const getFileTypeFromMetadata = (item: KnowledgeBaseItem) => {
-    return item.metadata.fileType || 'file'
-  }
+  // Handle preview file
+  const handlePreview = async (id: string) => {
+    try {
+      await getPreviewUrl(id);
+      // URL is automatically opened in new tab by getPreviewUrl function
+    } catch (error) {
+      toast.error('Preview failed', {
+        description: error instanceof Error ? error.message : 'Unable to open preview. Please try again later.',
+        duration: 4000,
+      });
+    }
+  };
+
 
   return (
     <div className="space-y-6">
+      {/* Information Alert */}
+      <Alert>
+        <Info className="h-4 w-4" />
+        <AlertDescription>
+          Knowledge Base supports two upload methods: <strong>Text Knowledge</strong> for direct input of business rules,
+          and <strong>File Upload</strong> for documents (PDF, DOC, DOCX, TXT, CSV, XLSX).
+          All uploads are processed using form-data format as specified in the API.
+        </AlertDescription>
+      </Alert>
+
       <Tabs defaultValue="add" className="w-full">
         <TabsList className="grid w-full grid-cols-2">
           <TabsTrigger value="add">Add Knowledge</TabsTrigger>
@@ -263,153 +155,32 @@ const KnowledgeBase = () => {
         </TabsList>
 
         <TabsContent value="add" className="space-y-6">
-          {error && (
-            <Card className="border-red-200 bg-red-50">
-              <CardContent className="pt-6">
-                <p className="text-red-600 text-sm">{error}</p>
-              </CardContent>
-            </Card>
-          )}
-
-          <Card>
-            <CardHeader>
-              <CardTitle>Add Business Rule or Knowledge Base</CardTitle>
-              <CardDescription>
-                Enter business rules, policies, or knowledge that the system should understand
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="knowledge-title">Title</Label>
-                <Input
-                  id="knowledge-title"
-                  placeholder="Enter knowledge title..."
-                  value={newKnowledgeTitle}
-                  onChange={(e) => setNewKnowledgeTitle(e.target.value)}
-                  disabled={isAdding}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="knowledge-description">Description</Label>
-                <Textarea
-                  id="knowledge-description"
-                  placeholder="Enter your business rules or knowledge base description here..."
-                  value={newKnowledgeText}
-                  onChange={(e) => setNewKnowledgeText(e.target.value)}
-                  rows={6}
-                  disabled={isAdding}
-                />
-              </div>
-              <div className="flex items-center justify-center w-full">
-                <label
-                  htmlFor="file-upload"
-                  className={`flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50 ${isAdding ? 'opacity-50 cursor-not-allowed' : ''}`}
-                >
-                  <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                    <Upload className="w-8 h-8 mb-4 text-gray-500" />
-                    <p className="mb-2 text-sm text-gray-500">
-                      <span className="font-semibold">Click to upload</span> or drag and drop
-                    </p>
-                    <p className="text-xs text-gray-500">PDF, DOC, TXT files</p>
-                  </div>
-                  <input
-                    id="file-upload"
-                    type="file"
-                    className="hidden"
-                    accept=".pdf,.doc,.docx,.txt,.csv,.xlsx"
-                    onChange={handleFileUpload}
-                    disabled={isAdding}
-                  />
-                </label>
-              </div>
-              <Button
-                onClick={handleAddTextKnowledge}
-                className="w-full"
-                disabled={isAdding || (!newKnowledgeTitle || !newKnowledgeText)}
-              >
-                <FileText className="mr-2 h-4 w-4" />
-                {isAdding ? 'Adding Knowledge...' : 'Add Knowledge'}
-              </Button>
-            </CardContent>
-          </Card>
+          <KnowledgeForm
+            onSubmitText={handleSubmitText}
+            onSubmitFile={handleSubmitFile}
+            isLoading={isAdding}
+            uploadProgress={uploadProgress}
+            error={error}
+          />
         </TabsContent>
 
         <TabsContent value="manage">
-          {/* Knowledge Items Display */}
-          <div className="space-y-4">
-            <h2 className="text-xl font-semibold">Existing Knowledge Base</h2>
-
-            {loading ? (
-              <Card>
-                <CardContent className="flex items-center justify-center h-32">
-                  <p className="text-gray-500">Loading knowledge base...</p>
-                </CardContent>
-              </Card>
-            ) : error ? (
-              <Card>
-                <CardContent className="flex items-center justify-center h-32">
-                  <p className="text-red-500">Error: {error}</p>
-                </CardContent>
-              </Card>
-            ) : knowledgeItems.length === 0 ? (
-              <Card>
-                <CardContent className="flex items-center justify-center h-32">
-                  <p className="text-gray-500">No knowledge items found. Add some knowledge to get started.</p>
-                </CardContent>
-              </Card>
-            ) : (
-              <div className="grid gap-4">
-                {knowledgeItems.map((item) => (
-                  <Card key={item.knowledgebaseId}>
-                    <CardHeader>
-                      <div className="flex items-start justify-between">
-                        <div className="flex-1">
-                          <CardTitle className="flex items-center gap-2">
-                            {item.title}
-                            <Badge variant="secondary">
-                              {getFileTypeFromMetadata(item).toUpperCase()}
-                            </Badge>
-                          </CardTitle>
-                          <div className="mt-3 p-3 bg-blue-50 border-l-4 border-blue-400 rounded-r-md">
-                            <p className="text-blue-800 font-medium text-sm">
-                              Description: {item.description}
-                            </p>
-                          </div>
-                          <div className="mt-3 space-y-1">
-                            <CardDescription className="text-sm text-gray-500">
-                              Created: {new Date(item.createdAt).toLocaleDateString()}
-                            </CardDescription>
-                            <CardDescription className="text-sm text-gray-500">
-                              Updated: {new Date(item.updatedAt).toLocaleDateString()}
-                            </CardDescription>
-                          </div>
-                        </div>
-                        <div className="flex gap-2">
-                          {/* <Button size="sm" variant="outline" onClick={() => handleEdit(item)}>
-                            <Edit className="h-4 w-4" />
-                          </Button> */}
-                          {/* <Button size="sm" variant="default" onClick={() => handleDownload(item.knowledgebaseId)}>
-                            <FileDown className="h-4 w-4" />
-                          </Button> */}
-                          <Button
-                            size="sm"
-                            variant="destructive"
-                            onClick={() => handleDelete(item.knowledgebaseId)}
-                            disabled={isDeleting === item.knowledgebaseId}
-                          >
-                            <Trash2 className="h-4 w-4" />
-                            {isDeleting === item.knowledgebaseId && <span className="ml-1">...</span>}
-                          </Button>
-                        </div>
-                      </div>
-                    </CardHeader>
-                  </Card>
-                ))}
-              </div>
-            )}
-          </div>
+          <KnowledgeList
+            items={knowledgeItems}
+            loading={loading}
+            error={error}
+            onDelete={handleDelete}
+            onDownload={handleDownload}
+            onViewContent={handleViewContent}
+            onPreview={handlePreview}
+            onRefresh={fetchKnowledgeBase}
+            isDeleting={isDeleting}
+            formatFileSize={formatFileSize}
+            getFileType={getFileTypeFromMetadata}
+          />
         </TabsContent>
       </Tabs>
+
     </div>
   )
 }
