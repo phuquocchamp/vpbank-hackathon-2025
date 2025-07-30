@@ -103,9 +103,9 @@ const SystemLogsTable = ({
   const EmptyState = ({ icon: Icon, title, description }: { icon: any, title: string, description: string }) => (
     <div className="flex items-center justify-center py-16">
       <div className="text-center">
-        <Icon className="h-12 w-12 text-gray-300 mx-auto mb-4" />
-        <p className="text-gray-500 font-medium text-lg">{title}</p>
-        <p className="text-gray-400 text-sm">{description}</p>
+        <Icon className="h-12 w-12 text-gray-300 dark:text-gray-600 mx-auto mb-4" />
+        <p className="text-gray-500 dark:text-gray-400 font-medium text-lg">{title}</p>
+        <p className="text-gray-400 dark:text-gray-500 text-sm">{description}</p>
       </div>
     </div>
   );
@@ -122,9 +122,9 @@ const SystemLogsTable = ({
         <CardContent>
           <div className="flex items-center justify-center p-8">
             <div className="text-center">
-              <AlertCircle className="h-8 w-8 text-red-400 mx-auto mb-2" />
-              <p className="text-red-600 font-medium">Error loading logs</p>
-              <p className="text-gray-500 text-sm">{logError}</p>
+              <AlertCircle className="h-8 w-8 text-red-400 dark:text-red-500 mx-auto mb-2" />
+              <p className="text-red-600 dark:text-red-400 font-medium">Error loading logs</p>
+              <p className="text-gray-500 dark:text-gray-400 text-sm">{logError}</p>
               <Button onClick={onRefresh} variant="outline" size="sm" className="mt-2">
                 Try Again
               </Button>
@@ -147,8 +147,8 @@ const SystemLogsTable = ({
         <CardContent>
           <div className="flex items-center justify-center p-8">
             <div className="text-center">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-2"></div>
-              <p className="text-gray-500">Loading logs...</p>
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 dark:border-blue-400 mx-auto mb-2"></div>
+              <p className="text-gray-500 dark:text-gray-400">Loading logs...</p>
             </div>
           </div>
         </CardContent>
@@ -168,9 +168,9 @@ const SystemLogsTable = ({
         <CardContent>
           <div className="flex items-center justify-center p-8">
             <div className="text-center">
-              <AlertCircle className="h-8 w-8 text-gray-400 mx-auto mb-2" />
-              <p className="text-gray-600 font-medium">No log data available</p>
-              <p className="text-gray-500 text-sm">Unable to load system logs</p>
+              <AlertCircle className="h-8 w-8 text-gray-400 dark:text-gray-500 mx-auto mb-2" />
+              <p className="text-gray-600 dark:text-gray-300 font-medium">No log data available</p>
+              <p className="text-gray-500 dark:text-gray-400 text-sm">Unable to load system logs</p>
               <Button onClick={onRefresh} variant="outline" size="sm" className="mt-2">
                 Try Loading Again
               </Button>
@@ -190,7 +190,7 @@ const SystemLogsTable = ({
           <Badge variant="outline" className="ml-2">
             {allLogsCount} total
             {hasActiveFilters && (
-              <span className="text-blue-600"> (filtered from {validLogs.length})</span>
+              <span className="text-blue-600 dark:text-blue-400"> (filtered from {validLogs.length})</span>
             )}
           </Badge>
           {errorLogsCount > 0 && (
@@ -231,10 +231,10 @@ const SystemLogsTable = ({
           </TabsList>
           
           <TabsContent value="all" className="space-y-4">
-            <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
+            <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden shadow-sm">
               <LogTableHeader />
               
-              <div className="divide-y divide-gray-100">
+              <div className="divide-y divide-gray-100 dark:divide-gray-700">
                 {currentLogs.length === 0 ? (
                   <EmptyState 
                     icon={Terminal}
@@ -264,17 +264,17 @@ const SystemLogsTable = ({
           </TabsContent>
 
           <TabsContent value="error">
-            <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
-              <div className="grid grid-cols-11 gap-4 px-6 py-4 bg-red-50 border-b text-sm font-medium text-red-800">
+            <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden shadow-sm">
+              <div className="grid grid-cols-11 gap-4 px-6 py-4 bg-red-50 dark:bg-red-950/30 border-b border-red-200 dark:border-red-800/50 text-sm font-medium text-red-800 dark:text-red-200">
                 <div className="col-span-2">Timestamp</div>
-                <div className="col-span-2 font-bold text-blue-800">Service</div>
+                <div className="col-span-2 font-bold text-blue-800 dark:text-blue-300">Service</div>
                 <div className="col-span-1">Code</div>
                 <div className="col-span-2">User</div>
-                <div className="col-span-1 font-bold text-purple-800">Role</div>
+                <div className="col-span-1 font-bold text-purple-800 dark:text-purple-300">Role</div>
                 <div className="col-span-3">Error Message</div>
               </div>
               
-              <div className="divide-y divide-gray-100">
+              <div className="divide-y divide-gray-100 dark:divide-gray-700">
                 {currentLogs.length === 0 ? (
                   <EmptyState 
                     icon={CheckCircle}
@@ -283,7 +283,7 @@ const SystemLogsTable = ({
                   />
                 ) : (
                   currentLogs.map((log: LogEntry, index: number) => (
-                    <div key={index} className="hover:bg-red-50 transition-colors">
+                    <div key={index} className="hover:bg-red-50 dark:hover:bg-red-950/20 transition-colors">
                       <LogTableRow log={log} index={index} showLevel={false} />
                     </div>
                   ))
@@ -301,17 +301,17 @@ const SystemLogsTable = ({
           </TabsContent>
 
           <TabsContent value="info">
-            <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
-              <div className="grid grid-cols-11 gap-4 px-6 py-4 bg-blue-50 border-b text-sm font-medium text-blue-800">
+            <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden shadow-sm">
+              <div className="grid grid-cols-11 gap-4 px-6 py-4 bg-blue-50 dark:bg-blue-950/30 border-b border-blue-200 dark:border-blue-800/50 text-sm font-medium text-blue-800 dark:text-blue-200">
                 <div className="col-span-2">Timestamp</div>
-                <div className="col-span-2 font-bold text-blue-900">Service</div>
+                <div className="col-span-2 font-bold text-blue-900 dark:text-blue-300">Service</div>
                 <div className="col-span-1">Code</div>
                 <div className="col-span-2">User</div>
-                <div className="col-span-1 font-bold text-purple-900">Role</div>
+                <div className="col-span-1 font-bold text-purple-900 dark:text-purple-300">Role</div>
                 <div className="col-span-3">Info Message</div>
               </div>
               
-              <div className="divide-y divide-gray-100">
+              <div className="divide-y divide-gray-100 dark:divide-gray-700">
                 {currentLogs.length === 0 ? (
                   <EmptyState 
                     icon={CheckCircle}
@@ -320,7 +320,7 @@ const SystemLogsTable = ({
                   />
                 ) : (
                   currentLogs.map((log: LogEntry, index: number) => (
-                    <div key={index} className="hover:bg-blue-50 transition-colors">
+                    <div key={index} className="hover:bg-blue-50 dark:hover:bg-blue-950/20 transition-colors">
                       <LogTableRow log={log} index={index} showLevel={false} />
                     </div>
                   ))

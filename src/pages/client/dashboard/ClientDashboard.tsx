@@ -1,21 +1,24 @@
 
-import ComingSoon from '@/components/common/ComingSoon';
 import { useHeader } from '@/contexts/HeaderContext';
 import { Badge } from '@/components/ui/badge';
 import { Home } from 'lucide-react';
 import { useEffect } from 'react';
+import DailyTask from '@/components/common/DailyTask';
+import TaskTracking from '@/components/common/TaskTracking';
+import { useAuth } from '@/contexts/AuthContext';
 
 const ClientDashboard = () => {
   const { setHeaderInfo } = useHeader();
+  const { user } = useAuth();
 
   useEffect(() => {
     setHeaderInfo({
       title: 'Dashboard',
-      description: 'Your personal financial overview',
+      description: 'Your personal financial overview and task management',
       badge: (
         <Badge variant="outline" className="text-xs">
           <Home className="size-3 mr-1" />
-          Coming Soon
+          Client Dashboard
         </Badge>
       )
     });
@@ -24,20 +27,13 @@ const ClientDashboard = () => {
   }, [setHeaderInfo]);
 
   return (
-    <ComingSoon
-      title="Personal Dashboard"
-      subtitle="Your command center is being crafted"
-      description="We're creating a personalized dashboard that will give you complete control over your banking experience with intuitive insights and quick actions."
-      features={[
-        "Personalized financial overview",
-        "Quick transaction history",
-        "Smart spending insights",
-        "Goal tracking and progress",
-        "One-click financial actions",
-        "Real-time notifications"
-      ]}
-      expectedDate="Q1 2025"
-    />
+    <div className="space-y-6 p-6">
+      {/* Daily Task Section - Top */}
+      <DailyTask />
+      
+      {/* Task Tracking Section - Bottom */}
+      <TaskTracking userId={user?.id} className="mt-6" />
+    </div>
   );
 };
 
