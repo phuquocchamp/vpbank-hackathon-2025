@@ -11,7 +11,7 @@ import { MessageItem } from '../../../components/conversation/MessageItem';
 
 const AdminConversation = () => {
   const { conversationId } = useParams<{ conversationId: string }>();
-  const { state, loadConversation, sendMessage } = useConversation();
+  const { state, loadConversation, sendMessage, updateMessage } = useConversation();
   const { setHeaderInfo } = useHeader();
   const [queryResults, setQueryResults] = useState<{ [key: string]: any }>({});
   const [executingQueries, setExecutingQueries] = useState<{ [key: string]: boolean }>({});
@@ -24,9 +24,15 @@ const AdminConversation = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
+  // Auto scroll to bottom only when number of messages changes (not when editing)
+  const prevMessageCountRef = useRef<number>(0);
   useEffect(() => {
-    scrollToBottom();
-  }, [state.currentConversation?.messages]);
+    const currentCount = state.currentConversation?.messages?.length || 0;
+    if (currentCount > prevMessageCountRef.current) {
+      scrollToBottom();
+    }
+    prevMessageCountRef.current = currentCount;
+  }, [state.currentConversation?.messages.length]);
 
   // Update header info when conversation changes
   useEffect(() => {
@@ -119,6 +125,19 @@ const AdminConversation = () => {
     document.body.removeChild(link);
   };
 
+  const handleUpdateMessage = async (messageId: string, sql: string, database: string) => {
+    if (!conversationId) {
+      throw new Error('No conversation ID available');
+    }
+
+    try {
+      await updateMessage(conversationId, messageId, sql, database);
+    } catch (error) {
+      console.error('Failed to update message:', error);
+      throw error;
+    }
+  };
+
   if (!conversationId) {
     return (
       <EmptyState
@@ -163,10 +182,12 @@ const AdminConversation = () => {
                   <MessageItem
                     key={message.id}
                     message={message}
+                    conversationId={conversationId}
                     onExecuteQuery={handleExecuteQuery}
                     queryResults={queryResults}
                     executingQueries={executingQueries}
                     onDownloadResults={downloadResults}
+                    onUpdateMessage={handleUpdateMessage}
                   />
                 ))}
                 <div ref={messagesEndRef} />

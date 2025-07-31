@@ -11,7 +11,7 @@ import { MessageItem } from '../../../components/conversation/MessageItem';
 
 const ClientConversation = () => {
   const { conversationId } = useParams<{ conversationId: string }>();
-  const { state, loadConversation, sendMessage } = useConversation();
+  const { state, loadConversation, sendMessage, updateMessage } = useConversation();
   const { setHeaderInfo } = useHeader();
 
   // Query execution states
@@ -30,9 +30,15 @@ const ClientConversation = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
+  // Auto scroll to bottom only when number of messages changes (not when editing)
+  const prevMessageCountRef = useRef<number>(0);
   useEffect(() => {
-    scrollToBottom();
-  }, [state.currentConversation?.messages]);
+    const currentCount = state.currentConversation?.messages?.length || 0;
+    if (currentCount > prevMessageCountRef.current) {
+      scrollToBottom();
+    }
+    prevMessageCountRef.current = currentCount;
+  }, [state.currentConversation?.messages.length]);
 
   // Update header info when conversation changes
   useEffect(() => {
@@ -147,6 +153,18 @@ const ClientConversation = () => {
     }
   };
 
+  const handleUpdateMessage = async (messageId: string, sql: string, database: string) => {
+    if (!conversationId) {
+      throw new Error('No conversation ID available');
+    }
+    try {
+      await updateMessage(conversationId, messageId, sql, database);
+    } catch (error) {
+      console.error('Failed to update message:', error);
+      throw error;
+    }
+  };
+
   const downloadResults = (presignedUrl: string, filename = 'query_results.xlsx') => {
     try {
       const link = document.createElement('a');
@@ -217,10 +235,12 @@ const ClientConversation = () => {
                   <MessageItem
                     key={message.id}
                     message={message}
+                    conversationId={conversationId}
                     onExecuteQuery={handleExecuteQuery}
                     queryResults={queryResults}
                     executingQueries={executingQueries}
                     onDownloadResults={downloadResults}
+                    onUpdateMessage={message.role === 'assistant' ? handleUpdateMessage : undefined}
                   />
                 ))}
                 <div ref={messagesEndRef} />
