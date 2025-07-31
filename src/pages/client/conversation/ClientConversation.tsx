@@ -11,7 +11,7 @@ import { MessageItem } from '../../../components/conversation/MessageItem';
 
 const ClientConversation = () => {
   const { conversationId } = useParams<{ conversationId: string }>();
-  const { state, loadConversation, sendMessage } = useConversation();
+  const { state, loadConversation, sendMessage, updateMessage } = useConversation();
   const { setHeaderInfo } = useHeader();
 
   // Query execution states
@@ -153,6 +153,18 @@ const ClientConversation = () => {
     }
   };
 
+  const handleUpdateMessage = async (messageId: string, sql: string, database: string) => {
+    if (!conversationId) {
+      throw new Error('No conversation ID available');
+    }
+    try {
+      await updateMessage(conversationId, messageId, sql, database);
+    } catch (error) {
+      console.error('Failed to update message:', error);
+      throw error;
+    }
+  };
+
   const downloadResults = (presignedUrl: string, filename = 'query_results.xlsx') => {
     try {
       const link = document.createElement('a');
@@ -228,6 +240,7 @@ const ClientConversation = () => {
                     queryResults={queryResults}
                     executingQueries={executingQueries}
                     onDownloadResults={downloadResults}
+                    onUpdateMessage={message.role === 'assistant' ? handleUpdateMessage : undefined}
                   />
                 ))}
                 <div ref={messagesEndRef} />
