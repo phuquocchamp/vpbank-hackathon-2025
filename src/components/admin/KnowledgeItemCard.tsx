@@ -2,13 +2,14 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import type { KnowledgeBaseItem } from '@/hooks/useKnowledgeBase';
-import { Download, FileText, Trash2 } from 'lucide-react';
+import { Download, FileText, Trash2, Edit } from 'lucide-react';
 
 interface KnowledgeItemCardProps {
   item: KnowledgeBaseItem;
   onDelete: (id: string) => void;
   onDownload?: (id: string) => void;
   onViewContent?: (item: KnowledgeBaseItem) => void;
+  onEdit?: (item: KnowledgeBaseItem) => void;
   onPreview?: (id: string) => void;
   isDeleting: boolean;
   formatFileSize: (bytes: number) => string;
@@ -19,6 +20,8 @@ const KnowledgeItemCard = ({
   item,
   onDelete,
   onDownload,
+  onViewContent,
+  onEdit,
   isDeleting,
   formatFileSize,
   getFileType
@@ -65,11 +68,14 @@ const KnowledgeItemCard = ({
   };
 
   return (
-    <Card className="transition-all duration-200 hover:shadow-md border border-gray-200 hover:border-blue-300 group">
+    <Card
+      className="w-full transition-all duration-200 hover:shadow-md border border-gray-200 hover:border-blue-300 group cursor-pointer"
+      onClick={() => onViewContent?.(item)}
+    >
       <CardContent className="p-4">
         <div className="flex items-center justify-between gap-3">
           {/* File Icon & Info */}
-          <div className="flex items-center gap-3 flex-1 min-w-0">
+          <div className="flex items-center gap-3 flex-1 min-w-0 max-w-[calc(100%-120px)]">
             <div className="w-8 h-8 rounded-md bg-blue-50 flex items-center justify-center border border-blue-200 flex-shrink-0">
               {isFile ? (
                 <span className="text-lg">{getFileIcon(fileType)}</span>
@@ -79,21 +85,23 @@ const KnowledgeItemCard = ({
             </div>
 
             <div className="flex flex-col gap-1 flex-1 min-w-0">
-              <div className="flex items-center gap-2">
-                <h3 className="font-medium text-sm text-gray-900 truncate">
+              <div className="flex items-center gap-2 flex-wrap">
+                <h3 className="font-medium text-sm text-gray-900 truncate max-w-[300px]">
                   {item.title}
                 </h3>
                 <Badge
                   variant={isFile ? "default" : "secondary"}
-                  className="text-xs h-5 px-2"
+                  className="text-xs h-5 px-2 flex-shrink-0"
                 >
                   {isFile ? fileType.split('/').pop()?.toUpperCase() || 'FILE' : 'TEXT'}
                 </Badge>
               </div>
 
-              <p className="text-xs text-gray-600 truncate">
-                {item.description}
-              </p>
+              <div className="p-4 bg-gray-50 border border-gray-200 rounded-md">
+                <p className="text-base text-gray-700 line-clamp-2 max-w-full break-words whitespace-pre-wrap">
+                  {item.description}
+                </p>
+              </div>
 
               <div className="flex items-center gap-2 text-xs text-gray-500">
                 {fileSize && (
@@ -110,6 +118,22 @@ const KnowledgeItemCard = ({
 
           {/* Action Buttons */}
           <div className="flex items-center gap-1 opacity-60 group-hover:opacity-100 transition-opacity flex-shrink-0">
+            {/* Edit Button */}
+            {onEdit && (
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onEdit(item);
+                }}
+                className="h-7 w-7 p-0 hover:bg-blue-50 hover:text-blue-600"
+                title="Edit knowledge item"
+              >
+                <Edit className="h-3.5 w-3.5" />
+              </Button>
+            )}
+
             {/* Download Button - Only for files */}
             {onDownload && isFile && (
               <Button

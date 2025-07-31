@@ -1,0 +1,79 @@
+/* Custom styles for markdown editor to make icons larger */
+.markdown-editor-wrapper .w-md-editor .w-md-editor-bar {
+  padding: 8px;
+  background-color: #f8fafc;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.markdown-editor-wrapper .w-md-editor .w-md-editor-bar svg {
+  width: 18px !important;
+  height: 18px !important;
+}
+
+.markdown-editor-wrapper .w-md-editor .w-md-editor-bar button {
+  padding: 6px 8px !important;
+  min-width: 32px !important;
+  min-height: 32px !important;
+  border-radius: 4px;
+  transition: all 0.2s;
+}
+
+.markdown-editor-wrapper .w-md-editor .w-md-editor-bar button:hover {
+  background-color: #e2e8f0;
+}
+
+/* Make sure the toolbar buttons are properly spaced */
+.markdown-editor-wrapper .w-md-editor .w-md-editor-bar .w-md-editor-bar-item {
+  margin: 0 2px;
+}
+
+/* Improve the overall appearance */
+.markdown-editor-wrapper .w-md-editor {
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.markdown-editor-wrapper .w-md-editor .w-md-editor-text-container .w-md-editor-text {
+  font-size: 14px !important;
+  line-height: 1.6 !important;
+  padding: 12px !important;
+}
+
+.markdown-editor-wrapper .w-md-editor .w-md-editor-text-container {
+  border-radius: 0 0 8px 8px;
+}
+
+/* Responsive adjustments for wide dialogs */
+@media (min-width: 1024px) {
+  .markdown-editor-wrapper .w-md-editor .w-md-editor-text-container .w-md-editor-text {
+    padding: 16px !important;
+  }
+}
+
+/* Force dialog width override */
+.knowledge-edit-dialog {
+  max-width: 90vw !important;
+  width: 90vw !important;
+  max-height: 85vh !important;
+  overflow: hidden !important;
+}
+
+/* Ensure proper layout for markdown editor in dialog */
+.knowledge-edit-dialog .markdown-editor-wrapper {
+  height: 100% !important;
+  display: flex !important;
+  flex-direction: column !important;
+}
+
+.knowledge-edit-dialog .markdown-editor-wrapper .w-md-editor {
+  flex: 1 !important;
+  min-height: 300px !important;
+  max-height: 400px !important;
+  overflow: hidden !important;
+}
+
+.knowledge-edit-dialog .w-md-editor .w-md-editor-text-container {
+  flex: 1 !important;
+  overflow: auto !important;
+}

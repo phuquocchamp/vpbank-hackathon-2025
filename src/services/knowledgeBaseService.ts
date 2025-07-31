@@ -63,14 +63,13 @@ export const knowledgeBaseService = {
 
   // Add text-only knowledge
   async addText(title: string, description: string): Promise<void> {
-    const formData = new FormData();
-    formData.append('title', title.trim());
-    formData.append('description', description.trim());
-
     const response = await fetch(`${BASE_URL}/admin/knowledge-bases`, {
       method: 'POST',
-      headers: createHeaders(),
-      body: formData,
+      headers: createHeaders(true),
+      body: JSON.stringify({
+        title: title.trim(),
+        description: description.trim()
+      }),
     });
 
     if (!response.ok) {
@@ -79,6 +78,26 @@ export const knowledgeBaseService = {
       }
       const errorText = await response.text();
       throw new Error(`Failed to add knowledge: ${response.status} - ${errorText}`);
+    }
+  },
+
+  // Update knowledge base item
+  async update(id: string, title: string, description: string): Promise<void> {
+    const response = await fetch(`${BASE_URL}/admin/knowledge-bases/${id}`, {
+      method: 'PUT',
+      headers: createHeaders(true),
+      body: JSON.stringify({
+        title: title.trim(),
+        description: description.trim()
+      }),
+    });
+
+    if (!response.ok) {
+      if (response.status === 401) {
+        throw new Error('Authentication failed. Please login again.');
+      }
+      const errorText = await response.text();
+      throw new Error(`Failed to update knowledge: ${response.status} - ${errorText}`);
     }
   },
 

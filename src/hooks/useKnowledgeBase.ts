@@ -121,12 +121,9 @@ export const useKnowledgeBase = () => {
 
     try {
       const token = getAuthToken();
-      const formData = new FormData();
-      
-      formData.append('title', title.trim());
-      formData.append('description', description.trim());
-
-      const headers: HeadersInit = {};
+      const headers: HeadersInit = {
+        'Content-Type': 'application/json',
+      };
       
       if (token) {
         headers['Authorization'] = `Bearer ${token}`;
@@ -135,7 +132,10 @@ export const useKnowledgeBase = () => {
       const response = await fetch(`${BASE_URL}/admin/knowledge-bases`, {
         method: 'POST',
         headers,
-        body: formData
+        body: JSON.stringify({
+          title: title.trim(),
+          description: description.trim()
+        })
       });
 
       if (!response.ok) {
@@ -259,6 +259,54 @@ export const useKnowledgeBase = () => {
       throw new Error(errorMessage);
     } finally {
       setIsDeleting(null);
+    }
+  };
+
+  // Update knowledge base item
+  const updateKnowledgeItem = async (id: string, title: string, description: string) => {
+    setIsAdding(true);
+    setError(null);
+
+    try {
+      const token = getAuthToken();
+      const headers: HeadersInit = {
+        'Content-Type': 'application/json',
+      };
+      
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+
+      const response = await fetch(`${BASE_URL}/admin/knowledge-bases/${id}`, {
+        method: 'PUT',
+        headers,
+        body: JSON.stringify({
+          title: title.trim(),
+          description: description.trim()
+        })
+      });
+
+      if (!response.ok) {
+        if (response.status === 401) {
+          throw new Error('Authentication failed. Please login again.');
+        }
+        throw new Error(`Failed to update knowledge base: ${response.status}`);
+      }
+
+      // Update item in local state
+      setKnowledgeItems(prev => prev.map(item => 
+        item.knowledgebaseId === id 
+          ? { ...item, title: title.trim(), description: description.trim(), updatedAt: new Date().toISOString() }
+          : item
+      ));
+      
+      return { success: true };
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to update knowledge base';
+      setError(errorMessage);
+      throw new Error(errorMessage);
+    } finally {
+      setIsAdding(false);
     }
   };
 
@@ -425,6 +473,7 @@ export const useKnowledgeBase = () => {
     addTextKnowledge,
     uploadFileKnowledge,
     deleteKnowledgeItem,
+    updateKnowledgeItem,
     getKnowledgeContent,
     downloadKnowledgeFile,
     getPreviewUrl,

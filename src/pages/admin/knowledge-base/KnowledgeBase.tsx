@@ -1,6 +1,8 @@
 // import KnowledgeContentViewer from '@/components/admin/KnowledgeContentViewer'
 import KnowledgeForm from '@/components/admin/KnowledgeForm'
 import KnowledgeList from '@/components/admin/KnowledgeList'
+import KnowledgeViewDialog from '@/components/admin/KnowledgeViewDialog'
+import KnowledgeEditDialog from '@/components/admin/KnowledgeEditDialog'
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
@@ -8,7 +10,7 @@ import { useHeader } from '@/contexts/HeaderContext'
 import type { KnowledgeBaseItem } from '@/hooks/useKnowledgeBase'
 import { useKnowledgeBase } from '@/hooks/useKnowledgeBase'
 import { Database, Info } from 'lucide-react'
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { toast } from 'sonner'
 
 const KnowledgeBase = () => {
@@ -20,9 +22,8 @@ const KnowledgeBase = () => {
     error,
     isAdding,
     isDeleting,
-    uploadProgress,
     addTextKnowledge,
-    uploadFileKnowledge,
+    updateKnowledgeItem,
     deleteKnowledgeItem,
     fetchKnowledgeBase,
     getFileTypeFromMetadata,
@@ -30,6 +31,11 @@ const KnowledgeBase = () => {
     downloadKnowledgeFile,
     getPreviewUrl,
   } = useKnowledgeBase();
+
+  // Dialog states
+  const [viewDialogOpen, setViewDialogOpen] = useState(false);
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [selectedItem, setSelectedItem] = useState<KnowledgeBaseItem | null>(null);
 
   // Set header info for knowledge base page
   useEffect(() => {
@@ -64,23 +70,6 @@ const KnowledgeBase = () => {
     }
   };
 
-  // Handle file upload
-  const handleSubmitFile = async (file: File, title?: string, description?: string) => {
-    try {
-      await uploadFileKnowledge(file, title, description);
-      toast.success('File uploaded successfully!', {
-        description: `${file.name} has been processed and added to your knowledge base.`,
-        duration: 4000,
-      });
-    } catch (error) {
-      toast.error('Failed to upload file', {
-        description: error instanceof Error ? error.message : 'Please try again later.',
-        duration: 4000,
-      });
-      throw error; // Re-throw to let the form handle it
-    }
-  };
-
   // Handle knowledge deletion
   const handleDelete = async (id: string) => {
     try {
@@ -99,11 +88,31 @@ const KnowledgeBase = () => {
 
   // Handle view content
   const handleViewContent = (item: KnowledgeBaseItem) => {
-    // For now, just show a toast with the content
-    toast.info('View Content', {
-      description: `Title: ${item.title}`,
-      duration: 3000,
-    });
+    setSelectedItem(item);
+    setViewDialogOpen(true);
+  };
+
+  // Handle edit item
+  const handleEdit = (item: KnowledgeBaseItem) => {
+    setSelectedItem(item);
+    setEditDialogOpen(true);
+  };
+
+  // Handle update knowledge item
+  const handleUpdate = async (id: string, title: string, description: string) => {
+    try {
+      await updateKnowledgeItem(id, title, description);
+      toast.success('Knowledge updated successfully!', {
+        description: 'The knowledge base item has been updated.',
+        duration: 4000,
+      });
+    } catch (error) {
+      toast.error('Failed to update knowledge', {
+        description: error instanceof Error ? error.message : 'Please try again later.',
+        duration: 4000,
+      });
+      throw error; // Re-throw to let the dialog handle it
+    }
   };
 
   // Handle download file
@@ -142,9 +151,8 @@ const KnowledgeBase = () => {
       <Alert>
         <Info className="h-4 w-4" />
         <AlertDescription>
-          Knowledge Base supports two upload methods: <strong>Text Knowledge</strong> for direct input of business rules,
-          and <strong>File Upload</strong> for documents (PDF, DOC, DOCX, TXT, CSV, XLSX).
-          All uploads are processed using form-data format as specified in the API.
+          Knowledge Base supports text-based knowledge management with <strong>Markdown formatting</strong>.
+          Create rich content including headers, lists, links, code blocks, and more to organize your business rules and policies effectively.
         </AlertDescription>
       </Alert>
 
@@ -157,9 +165,7 @@ const KnowledgeBase = () => {
         <TabsContent value="add" className="space-y-6">
           <KnowledgeForm
             onSubmitText={handleSubmitText}
-            onSubmitFile={handleSubmitFile}
             isLoading={isAdding}
-            uploadProgress={uploadProgress}
             error={error}
           />
         </TabsContent>
@@ -172,6 +178,7 @@ const KnowledgeBase = () => {
             onDelete={handleDelete}
             onDownload={handleDownload}
             onViewContent={handleViewContent}
+            onEdit={handleEdit}
             onPreview={handlePreview}
             onRefresh={fetchKnowledgeBase}
             isDeleting={isDeleting}
@@ -181,6 +188,23 @@ const KnowledgeBase = () => {
         </TabsContent>
       </Tabs>
 
+      {/* View Dialog */}
+      <KnowledgeViewDialog
+        item={selectedItem}
+        open={viewDialogOpen}
+        onOpenChange={setViewDialogOpen}
+        getFileType={getFileTypeFromMetadata}
+        formatFileSize={formatFileSize}
+      />
+
+      {/* Edit Dialog */}
+      <KnowledgeEditDialog
+        item={selectedItem}
+        open={editDialogOpen}
+        onOpenChange={setEditDialogOpen}
+        onSave={handleUpdate}
+        isLoading={isAdding}
+      />
     </div>
   )
 }
