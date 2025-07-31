@@ -30,9 +30,15 @@ const ClientConversation = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
+  // Auto scroll to bottom only when number of messages changes (not when editing)
+  const prevMessageCountRef = useRef<number>(0);
   useEffect(() => {
-    scrollToBottom();
-  }, [state.currentConversation?.messages]);
+    const currentCount = state.currentConversation?.messages?.length || 0;
+    if (currentCount > prevMessageCountRef.current) {
+      scrollToBottom();
+    }
+    prevMessageCountRef.current = currentCount;
+  }, [state.currentConversation?.messages.length]);
 
   // Update header info when conversation changes
   useEffect(() => {
@@ -217,6 +223,7 @@ const ClientConversation = () => {
                   <MessageItem
                     key={message.id}
                     message={message}
+                    conversationId={conversationId}
                     onExecuteQuery={handleExecuteQuery}
                     queryResults={queryResults}
                     executingQueries={executingQueries}

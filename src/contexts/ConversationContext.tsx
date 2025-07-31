@@ -38,6 +38,7 @@ type ConversationAction =
   | { type: 'UPDATE_CONVERSATION'; payload: Conversation }
   | { type: 'DELETE_CONVERSATION'; payload: string }
   | { type: 'ADD_MESSAGE'; payload: { conversationId: string; message: Message } }
+  | { type: 'UPDATE_MESSAGE'; payload: { conversationId: string; messageId: string; message: Message } }
   | { type: 'SET_LOADING'; payload: boolean }
   | { type: 'SET_ERROR'; payload: string | null }
   | { type: 'CLEAR_CURRENT_CONVERSATION' };
@@ -95,6 +96,30 @@ const conversationReducer = (state: ConversationState, action: ConversationActio
           }
           : state.currentConversation,
       };
+    case 'UPDATE_MESSAGE':
+      return {
+        ...state,
+        conversations: state.conversations.map(conv =>
+          conv.conversationId === action.payload.conversationId
+            ? {
+              ...conv,
+              messages: conv.messages.map(msg =>
+                msg.id === action.payload.messageId ? action.payload.message : msg
+              ),
+              updatedAt: new Date()
+            }
+            : conv
+        ),
+        currentConversation: state.currentConversation?.conversationId === action.payload.conversationId
+          ? {
+            ...state.currentConversation,
+            messages: state.currentConversation.messages.map(msg =>
+              msg.id === action.payload.messageId ? action.payload.message : msg
+            ),
+            updatedAt: new Date(),
+          }
+          : state.currentConversation,
+      };
     case 'SET_LOADING':
       return { ...state, loading: action.payload };
     case 'SET_ERROR':
@@ -111,6 +136,7 @@ interface ConversationContextType {
   createNewConversation: () => Promise<Conversation>;
   loadConversation: (id: string) => Promise<void>;
   sendMessage: (conversationId: string, content: string) => Promise<void>;
+  updateMessage: (conversationId: string, messageId: string, sql: string, database: string) => Promise<void>;
   deleteConversation: (id: string) => Promise<void>;
   loadConversations: () => Promise<void>;
   updateConversationTitle: (id: string, title: string) => Promise<void>;
@@ -363,6 +389,58 @@ export const ConversationProvider: React.FC<{ children: React.ReactNode }> = ({ 
     }
   }, [getConversationEndpoint]);
 
+  const updateMessage = useCallback(async (conversationId: string, messageId: string, sql: string, database: string): Promise<void> => {
+    try {
+      const vpbankIdToken = localStorage.getItem('vpbank_id_token');
+
+      if (!vpbankIdToken) {
+        throw new Error('Authentication token not found');
+      }
+
+      const endpoint = `${API_BASE_URL}${getConversationEndpoint()}/${conversationId}/messages/${messageId}`;
+
+      const response = await fetch(endpoint, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${vpbankIdToken}`,
+        },
+        body: JSON.stringify({
+          database: database,
+          sql: sql
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const result = await response.json();
+
+      // Update the message in local state with the response data
+      const updatedMessage: Message = {
+        id: result.id,
+        content: result.content,
+        role: result.role,
+        timestamp: new Date(result.timestamp),
+      };
+
+      dispatch({
+        type: 'UPDATE_MESSAGE',
+        payload: {
+          conversationId,
+          messageId,
+          message: updatedMessage
+        }
+      });
+
+    } catch (error) {
+      console.error('Failed to update message:', error);
+      dispatch({ type: 'SET_ERROR', payload: error instanceof Error ? error.message : 'Failed to update message' });
+      throw error;
+    }
+  }, [getConversationEndpoint]);
+
   return (
     <ConversationContext.Provider
       value={{
@@ -370,6 +448,7 @@ export const ConversationProvider: React.FC<{ children: React.ReactNode }> = ({ 
         createNewConversation,
         loadConversation,
         sendMessage,
+        updateMessage,
         deleteConversation,
         loadConversations: loadAllConversations,
         updateConversationTitle,

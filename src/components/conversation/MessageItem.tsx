@@ -7,18 +7,22 @@ import { MessageContent } from './MessageContent';
 
 interface MessageItemProps {
   message: Message;
+  conversationId: string;
   onExecuteQuery: (query: string, database: string, messageId: string) => void;
   queryResults: { [key: string]: any };
   executingQueries: { [key: string]: boolean };
   onDownloadResults: (url: string, filename?: string) => void;
+  onUpdateMessage?: (messageId: string, sql: string, database: string) => Promise<void>;
 }
 
 export const MessageItem = ({
   message,
+  conversationId,
   onExecuteQuery,
   queryResults,
   executingQueries,
-  onDownloadResults
+  onDownloadResults,
+  onUpdateMessage
 }: MessageItemProps) => {
   const isUser = message.role !== 'assistant';
 
@@ -51,10 +55,12 @@ export const MessageItem = ({
           <MessageContent
             content={message.content}
             messageId={message.id}
+            conversationId={conversationId}
             onExecuteQuery={onExecuteQuery}
             queryResults={queryResults}
             executingQueries={executingQueries}
             onDownloadResults={onDownloadResults}
+            onUpdateMessage={!isUser ? onUpdateMessage : undefined}
           />
         </div>
       </Card>
