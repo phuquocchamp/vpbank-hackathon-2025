@@ -169,7 +169,7 @@ const AdminDashboard = () => {
           billingData={billingData}
           isLoadingBilling={isLoadingBilling}
           billingError={billingError}
-          onRefresh={fetchBilling}
+          onRefresh={(startDate, endDate) => fetchBilling(startDate, endDate)}
         />
       </div>
 
