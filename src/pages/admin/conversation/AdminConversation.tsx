@@ -4,7 +4,7 @@ import { useConversation } from '@/contexts/ConversationContext';
 import { useHeader } from '@/contexts/HeaderContext';
 import { AlertCircle, Bot, MessageSquare } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { EmptyState } from '../../../components/conversation/EmptyState';
 import { MessageInput } from '../../../components/conversation/MessageInput';
 import { MessageItem } from '../../../components/conversation/MessageItem';
@@ -14,6 +14,7 @@ const AdminConversation = () => {
   const { conversationId } = useParams<{ conversationId: string }>();
   const { state, loadConversation, sendMessage, updateMessage } = useConversation();
   const { setHeaderInfo } = useHeader();
+  const navigate = useNavigate();
   const [queryResults, setQueryResults] = useState<{ [key: string]: any }>({});
   const [executingQueries, setExecutingQueries] = useState<{ [key: string]: boolean }>({});
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -71,6 +72,18 @@ const AdminConversation = () => {
       loadConversation(conversationId);
     }
   }, [conversationId, loadConversation]);
+
+  // Navigate away if conversation is deleted while viewing
+  useEffect(() => {
+    if (conversationId && !state.loading && !state.currentConversation && state.conversations.length === 0) {
+      // If we have no conversations left, go to home
+      navigate('/admin');
+    } else if (conversationId && !state.loading && !state.currentConversation && state.conversations.length > 0) {
+      // If we have other conversations, go to the most recent one
+      const mostRecentConversation = state.conversations[0];
+      navigate(`/admin/conversations/${mostRecentConversation.conversationId}`);
+    }
+  }, [conversationId, state.currentConversation, state.loading, state.conversations, navigate]);
 
   const handleSendMessage = async (message: string) => {
     if (!conversationId) return;

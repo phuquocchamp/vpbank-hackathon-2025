@@ -4,7 +4,7 @@ import { useConversation } from '@/contexts/ConversationContext';
 import { useHeader } from '@/contexts/HeaderContext';
 import { AlertCircle, Bot, MessageSquare } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { EmptyState } from '../../../components/conversation/EmptyState';
 import { MessageInput } from '../../../components/conversation/MessageInput';
 import { MessageItem } from '../../../components/conversation/MessageItem';
@@ -14,6 +14,7 @@ const ClientConversation = () => {
   const { conversationId } = useParams<{ conversationId: string }>();
   const { state, loadConversation, sendMessage, updateMessage } = useConversation();
   const { setHeaderInfo } = useHeader();
+  const navigate = useNavigate();
 
   // Query execution states
   const [queryResults, setQueryResults] = useState<{ [key: string]: any }>({});
@@ -80,6 +81,18 @@ const ClientConversation = () => {
       });
     }
   }, [conversationId, loadConversation]);
+
+  // Navigate away if conversation is deleted while viewing
+  useEffect(() => {
+    if (conversationId && !state.loading && !state.currentConversation && state.conversations.length === 0) {
+      // If we have no conversations left, go to home
+      navigate('/client');
+    } else if (conversationId && !state.loading && !state.currentConversation && state.conversations.length > 0) {
+      // If we have other conversations, go to the most recent one
+      const mostRecentConversation = state.conversations[0];
+      navigate(`/client/conversations/${mostRecentConversation.conversationId}`);
+    }
+  }, [conversationId, state.currentConversation, state.loading, state.conversations, navigate]);
 
   // Clear error states when conversation changes
   useEffect(() => {

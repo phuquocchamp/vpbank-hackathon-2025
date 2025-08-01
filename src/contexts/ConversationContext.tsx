@@ -239,7 +239,9 @@ export const ConversationProvider: React.FC<{ children: React.ReactNode }> = ({ 
         if (response.status === 404) {
           // Conversation was deleted or doesn't exist
           dispatch({ type: 'CLEAR_CURRENT_CONVERSATION' });
-          throw new Error('Conversation not found');
+          // Don't throw error for 404, just clear and stop loading
+          dispatch({ type: 'SET_LOADING', payload: false });
+          return;
         }
 
         throw new Error(`Failed to load conversation: ${response.status} ${response.statusText}`);
@@ -256,7 +258,7 @@ export const ConversationProvider: React.FC<{ children: React.ReactNode }> = ({ 
           messages: (data.messages || []).map((msg: any) => ({
             id: msg.id,
             content: msg.content,
-            role: msg.role === 'assistant' ? 'assistant' : msg.role,
+            role: msg.role.toLowerCase() === 'user' ? 'user' : 'assistant', // Normalize role case (handle "User", "user", "assistant")
             timestamp: new Date(msg.timestamp)
           })),
           createdAt: new Date(data.createdAt),
@@ -265,7 +267,7 @@ export const ConversationProvider: React.FC<{ children: React.ReactNode }> = ({ 
 
         dispatch({ type: 'SET_CURRENT_CONVERSATION', payload: conversation });
       } else {
-        throw new Error('Conversation not found');
+        dispatch({ type: 'CLEAR_CURRENT_CONVERSATION' });
       }
     } catch (error) {
       console.error('Error loading conversation:', error);

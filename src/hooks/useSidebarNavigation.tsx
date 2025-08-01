@@ -22,16 +22,21 @@ export function useSidebarNavigation() {
   );
 
   const navigateAfterDelete = useCallback(
-    (deletedId: string, conversations: Conversation[]) => {
+    (deletedId: string, conversations: Conversation[], currentPath?: string) => {
       // Filter out the deleted conversation to get remaining ones
       const remainingConversations = conversations.filter(c => c.conversationId !== deletedId);
 
-      if (remainingConversations.length > 0) {
-        // Navigate to the most recent conversation (first in the list)
-        navigateToConversation(remainingConversations[0]);
-      } else {
-        // No conversations left, navigate to home
-        navigate(getHomePath());
+      // Only navigate if we're currently viewing the deleted conversation
+      const isViewingDeletedConversation = currentPath?.includes(deletedId);
+
+      if (isViewingDeletedConversation) {
+        if (remainingConversations.length > 0) {
+          // Navigate to the most recent conversation (first in the list)
+          navigateToConversation(remainingConversations[0]);
+        } else {
+          // No conversations left, navigate to home
+          navigate(getHomePath());
+        }
       }
     },
     [navigate, navigateToConversation, getHomePath]
