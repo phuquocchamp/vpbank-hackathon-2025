@@ -69,6 +69,16 @@ const Header = () => {
                 <p className="text-xs leading-none text-muted-foreground">
                   {user?.email}
                 </p>
+                <DropdownMenuSeparator />
+
+                {user?.co_code_ld && (
+                  <div className="flex items-center gap-1 mt-1">
+                    {/* <span className="text-xs text-muted-foreground"></span> */}
+                    <span className="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300 border">
+                      {user.co_code_ld}
+                    </span>
+                  </div>
+                )}
                 <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs mt-1 w-fit ${user?.role === 'ADMIN'
                   ? 'bg-red-100 text-red-700 dark:bg-red-900/20 dark:text-red-300'
                   : 'bg-blue-100 text-blue-700 dark:bg-blue-900/20 dark:text-blue-300'
