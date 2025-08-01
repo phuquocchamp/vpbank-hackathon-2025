@@ -211,6 +211,7 @@ export const ConversationProvider: React.FC<{ children: React.ReactNode }> = ({ 
 
   const loadConversation = useCallback(async (id: string): Promise<void> => {
     dispatch({ type: 'SET_LOADING', payload: true });
+    dispatch({ type: 'SET_ERROR', payload: null }); // Clear any previous errors
     try {
       // First check if conversation exists in current state
       const existingConversation = state.conversations.find(conv => conv.conversationId === id);
@@ -233,6 +234,14 @@ export const ConversationProvider: React.FC<{ children: React.ReactNode }> = ({ 
       if (!response.ok) {
         const errorText = await response.text();
         console.error('Failed to load conversation:', response.status, errorText);
+
+        // Handle specific error cases
+        if (response.status === 404) {
+          // Conversation was deleted or doesn't exist
+          dispatch({ type: 'CLEAR_CURRENT_CONVERSATION' });
+          throw new Error('Conversation not found');
+        }
+
         throw new Error(`Failed to load conversation: ${response.status} ${response.statusText}`);
       }
 
@@ -247,7 +256,7 @@ export const ConversationProvider: React.FC<{ children: React.ReactNode }> = ({ 
           messages: (data.messages || []).map((msg: any) => ({
             id: msg.id,
             content: msg.content,
-            role: msg.role === 'assistant' ? 'assistant' : msg.role, // Normalize role case
+            role: msg.role === 'assistant' ? 'assistant' : msg.role,
             timestamp: new Date(msg.timestamp)
           })),
           createdAt: new Date(data.createdAt),

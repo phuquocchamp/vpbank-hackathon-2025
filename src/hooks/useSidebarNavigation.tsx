@@ -23,10 +23,14 @@ export function useSidebarNavigation() {
 
   const navigateAfterDelete = useCallback(
     (deletedId: string, conversations: Conversation[]) => {
+      // Filter out the deleted conversation to get remaining ones
       const remainingConversations = conversations.filter(c => c.conversationId !== deletedId);
+
       if (remainingConversations.length > 0) {
+        // Navigate to the most recent conversation (first in the list)
         navigateToConversation(remainingConversations[0]);
       } else {
+        // No conversations left, navigate to home
         navigate(getHomePath());
       }
     },
