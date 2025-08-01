@@ -1,9 +1,12 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { ChartContainer, ChartTooltip } from '@/components/ui/chart';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid } from 'recharts';
-import { TrendingUp, RefreshCw, AlertCircle } from 'lucide-react';
+import { TrendingUp, RefreshCw, AlertCircle, Calendar, Filter } from 'lucide-react';
+import { useState } from 'react';
 
 interface BillingEntry {
   date: string;
@@ -14,10 +17,13 @@ interface BillingChartProps {
   billingData: BillingEntry[] | null;
   isLoadingBilling: boolean;
   billingError: string | null;
-  onRefresh: () => void;
+  onRefresh: (startDate?: string, endDate?: string) => void;
 }
 
 const BillingChart = ({ billingData, isLoadingBilling, billingError, onRefresh }: BillingChartProps) => {
+  const [startDate, setStartDate] = useState<string>('');
+  const [endDate, setEndDate] = useState<string>('');
+
   const chartConfig = {
     cost: { label: "Cost", color: "#3b82f6" },
   };
@@ -39,6 +45,24 @@ const BillingChart = ({ billingData, isLoadingBilling, billingError, onRefresh }
     return billingData.reduce((total, entry) => total + entry.cost, 0);
   };
 
+  const handleRefresh = () => {
+    onRefresh(startDate || undefined, endDate || undefined);
+  };
+
+  const handleFilterApply = () => {
+    if (startDate && endDate && startDate > endDate) {
+      alert('Start date must be before end date');
+      return;
+    }
+    onRefresh(startDate || undefined, endDate || undefined);
+  };
+
+  const handleClearFilters = () => {
+    setStartDate('');
+    setEndDate('');
+    onRefresh();
+  };
+
   return (
     <Card>
       <CardHeader>
@@ -49,7 +73,7 @@ const BillingChart = ({ billingData, isLoadingBilling, billingError, onRefresh }
             Total: ${getTotalBillingCost().toFixed(2)}
           </Badge>
           <Button
-            onClick={onRefresh}
+            onClick={handleRefresh}
             disabled={isLoadingBilling}
             variant="outline"
             size="sm"
@@ -66,6 +90,61 @@ const BillingChart = ({ billingData, isLoadingBilling, billingError, onRefresh }
         <p className="text-sm text-muted-foreground">
           Daily billing costs over time • Total: ${getTotalBillingCost().toFixed(2)}
         </p>
+        
+        {/* Date Filter Controls */}
+        <div className="flex items-end gap-4 mt-4 p-4 bg-muted/30 rounded-lg border-l-4 border-l-blue-500">
+          <div className="flex items-center gap-2">
+            <Calendar className="h-4 w-4 text-blue-600" />
+            <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Filter by Date Range:</span>
+          </div>
+          
+          <div className="flex items-center gap-2">
+            <Label htmlFor="start-date" className="text-xs text-gray-600 dark:text-gray-400">From:</Label>
+            <Input
+              id="start-date"
+              type="date"
+              value={startDate}
+              onChange={(e) => setStartDate(e.target.value)}
+              className="w-36 text-xs"
+              placeholder="Start date"
+            />
+          </div>
+          
+          <div className="flex items-center gap-2">
+            <Label htmlFor="end-date" className="text-xs text-gray-600 dark:text-gray-400">To:</Label>
+            <Input
+              id="end-date"
+              type="date"
+              value={endDate}
+              onChange={(e) => setEndDate(e.target.value)}
+              className="w-36 text-xs"
+              placeholder="End date"
+            />
+          </div>
+          
+          <div className="flex gap-2">
+            <Button
+              onClick={handleFilterApply}
+              disabled={isLoadingBilling}
+              variant="default"
+              size="sm"
+              className="text-xs"
+            >
+              <Filter className="h-3 w-3 mr-1" />
+              Apply Filter
+            </Button>
+            
+            <Button
+              onClick={handleClearFilters}
+              disabled={isLoadingBilling}
+              variant="outline"
+              size="sm"
+              className="text-xs"
+            >
+              Clear
+            </Button>
+          </div>
+        </div>
       </CardHeader>
       <CardContent>
         {billingError ? (
@@ -74,7 +153,7 @@ const BillingChart = ({ billingData, isLoadingBilling, billingError, onRefresh }
               <AlertCircle className="h-8 w-8 text-red-400 mx-auto mb-2" />
               <p className="text-red-600 font-medium">Error loading billing data</p>
               <p className="text-gray-500 text-sm">{billingError}</p>
-              <Button onClick={onRefresh} variant="outline" size="sm" className="mt-2">
+              <Button onClick={handleRefresh} variant="outline" size="sm" className="mt-2">
                 Try Again
               </Button>
             </div>

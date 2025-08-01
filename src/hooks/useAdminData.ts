@@ -152,8 +152,8 @@ export const useAdminData = () => {
     }
   };
 
-  // Fetch billing data from API
-  const fetchBilling = async () => {
+  // Fetch billing data from API with optional date filters
+  const fetchBilling = async (startDate?: string, endDate?: string) => {
     setIsLoadingBilling(true);
     setBillingError(null);
     
@@ -165,7 +165,22 @@ export const useAdminData = () => {
         throw new Error('Authentication token not found. Please login again.');
       }
 
-      const response = await fetch(`${BASE_URL}/billing`, {
+      // Build URL with query parameters if dates are provided
+      let url = `${BASE_URL}/billing`;
+      const params = new URLSearchParams();
+      
+      if (startDate) {
+        params.append('start', startDate);
+      }
+      if (endDate) {
+        params.append('end', endDate);
+      }
+      
+      if (params.toString()) {
+        url += `?${params.toString()}`;
+      }
+
+      const response = await fetch(url, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
