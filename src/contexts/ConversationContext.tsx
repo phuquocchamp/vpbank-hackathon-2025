@@ -221,24 +221,37 @@ export const ConversationProvider: React.FC<{ children: React.ReactNode }> = ({ 
       }
 
       // If not found, fetch from API - use dynamic endpoint
-      const response = await fetch(`${API_BASE_URL}${getConversationEndpoint()}/${id}`);
-      console.log('Loading conversation:', response);
+      const vpbankIdToken = localStorage.getItem('vpbank_id_token');
+      const response = await fetch(`${API_BASE_URL}${getConversationEndpoint()}/${id}`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${vpbankIdToken}`
+        }
+      });
 
-
-      if (!response.ok) throw new Error('Failed to load conversation');
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('Failed to load conversation:', response.status, errorText);
+        throw new Error(`Failed to load conversation: ${response.status} ${response.statusText}`);
+      }
 
       const data = await response.json();
-      const rawConversation = data.conversations && data.conversations.length > 0 ? data.conversations[0] : null;
+      console.log('Loading conversation:', data);
 
-      if (rawConversation) {
+      if (data && data.id) {
         const conversation: Conversation = {
-          ...rawConversation,
-          createdAt: new Date(rawConversation.createdAt),
-          updatedAt: new Date(rawConversation.updatedAt),
-          messages: rawConversation.messages.map((msg: any) => ({
-            ...msg,
+          conversationId: data.conversationId || data.id,
+          userId: data.userId,
+          title: data.title,
+          messages: (data.messages || []).map((msg: any) => ({
+            id: msg.id,
+            content: msg.content,
+            role: msg.role === 'assistant' ? 'assistant' : msg.role, // Normalize role case
             timestamp: new Date(msg.timestamp)
-          }))
+          })),
+          createdAt: new Date(data.createdAt),
+          updatedAt: new Date(data.updatedAt)
         };
 
         dispatch({ type: 'SET_CURRENT_CONVERSATION', payload: conversation });
@@ -246,6 +259,7 @@ export const ConversationProvider: React.FC<{ children: React.ReactNode }> = ({ 
         throw new Error('Conversation not found');
       }
     } catch (error) {
+      console.error('Error loading conversation:', error);
       dispatch({ type: 'SET_ERROR', payload: error instanceof Error ? error.message : 'Unknown error' });
     } finally {
       dispatch({ type: 'SET_LOADING', payload: false });
