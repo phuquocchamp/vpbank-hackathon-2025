@@ -4,12 +4,9 @@ import { Badge } from '@/components/ui/badge';
 import { Home } from 'lucide-react';
 import { useEffect } from 'react';
 import DailyTask from '@/components/common/DailyTask';
-import TaskTracking from '@/components/common/TaskTracking';
-import { useAuth } from '@/contexts/AuthContext';
 
 const ClientDashboard = () => {
   const { setHeaderInfo } = useHeader();
-  const { user } = useAuth();
 
   useEffect(() => {
     setHeaderInfo({
@@ -30,9 +27,6 @@ const ClientDashboard = () => {
     <div className="space-y-6 p-6">
       {/* Daily Task Section - Top */}
       <DailyTask />
-      
-      {/* Task Tracking Section - Bottom */}
-      <TaskTracking userId={user?.id} className="mt-6" />
     </div>
   );
 };

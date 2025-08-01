@@ -1,4 +1,4 @@
-import { Activity, BarChart3, Database, FileText, HelpCircle, Home, Users } from 'lucide-react';
+import { Activity, Database, FileText, HelpCircle, Home, Users } from 'lucide-react';
 import { ADMIN_ROUTES, CLIENT_ROUTES } from '@/config/routes';
 
 export interface MenuItem {
@@ -17,9 +17,9 @@ export const menuItems: MenuItem[] = [
     roles: ['USER'],
   },
   {
-    title: 'Analytics',
-    url: CLIENT_ROUTES.ANALYTICS,
-    icon: BarChart3,
+    title: 'Usage Guide',
+    url: CLIENT_ROUTES.HELP,
+    icon: HelpCircle,
     roles: ['USER'],
   },
   {
@@ -47,7 +47,7 @@ export const menuItems: MenuItem[] = [
     roles: ['ADMIN'],
   },
   {
-    title: 'Help & Support',
+    title: 'Usage Guide',
     url: ADMIN_ROUTES.HELP,
     icon: HelpCircle,
     roles: ['ADMIN'],

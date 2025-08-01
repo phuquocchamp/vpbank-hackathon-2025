@@ -1,20 +1,20 @@
-import ComingSoon from '@/components/common/ComingSoon';
+import { useEffect } from 'react';
 import { useHeader } from '@/contexts/HeaderContext';
 import { Badge } from '@/components/ui/badge';
 import { HelpCircle } from 'lucide-react';
-import { useEffect } from 'react';
+import HelpSupport from '@/components/common/HelpSupport';
 
 const AdminHelp = () => {
   const { setHeaderInfo } = useHeader();
 
   useEffect(() => {
     setHeaderInfo({
-      title: 'Help & Support',
-      description: 'Get assistance and documentation',
+      title: 'Usage Guide',
+      description: 'Learn how to use the admin system effectively',
       badge: (
         <Badge variant="outline" className="text-xs">
           <HelpCircle className="size-3 mr-1" />
-          Coming Soon
+          Usage Guide
         </Badge>
       )
     });
@@ -23,19 +23,9 @@ const AdminHelp = () => {
   }, [setHeaderInfo]);
 
   return (
-    <ComingSoon
-      title="Help & Support Center"
-      subtitle="Comprehensive admin assistance on the way"
-      description="We're building a comprehensive help center with documentation, tutorials, and 24/7 support to help you maximize your admin experience."
-      features={[
-        "Interactive tutorials and guides",
-        "Real-time chat support",
-        "Video documentation library",
-        "Community forums and discussions",
-        "Advanced troubleshooting tools"
-      ]}
-      expectedDate="Q2 2025"
-    />
+    <div className="container mx-auto px-4 py-6">
+      <HelpSupport userType="admin" />
+    </div>
   );
 };
 

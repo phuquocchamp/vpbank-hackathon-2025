@@ -5,8 +5,12 @@ import Layout from '../../components/layout/Layout';
 import LoginPage from '../../pages/auth/LoginPage';
 
 // Client pages
-import Analytics from '../../pages/client/analytics/Analytics';
 import ClientDashboard from '../../pages/client/dashboard/ClientDashboard';
+import Helps from '../../pages/client/helps/Helps';
+
+// Client guide pages
+import ConversationBasicsGuide from '../../pages/client/helps/guides/ConversationBasicsGuide';
+import DashboardOverviewGuide from '../../pages/client/helps/guides/DashboardOverviewGuide';
 
 // Admin pages
 import { PlaceholderPage } from '@/components/common/SampleComponent';
@@ -17,6 +21,12 @@ import SystemReport from '@/pages/admin/report/SystemReport';
 import AdminDashboard from '../../pages/admin/dashboard/AdminDashboard';
 import UserManagement from '../../pages/admin/user/UserManagement';
 import ClientConversation from '../../pages/client/conversation/ClientConversation';
+
+// Admin guide pages
+import DashboardNavigationGuide from '../../pages/admin/help/guides/DashboardNavigationGuide';
+import SystemLogsGuide from '../../pages/admin/help/guides/SystemLogsGuide';
+import ConversationManagementGuide from '../../pages/admin/help/guides/ConversationManagementGuide';
+import BillingAnalyticsGuide from '../../pages/admin/help/guides/BillingAnalyticsGuide';
 
 
 // Create router
@@ -62,8 +72,16 @@ export const router = createBrowserRouter([
         element: <ClientConversation />,
       },
       {
-        path: 'analytics',
-        element: <Analytics />,
+        path: 'help',
+        element: <Helps />,
+      },
+      {
+        path: 'help/conversation-basics',
+        element: <ConversationBasicsGuide />,
+      },
+      {
+        path: 'help/dashboard-overview',
+        element: <DashboardOverviewGuide />,
       }
     ]
   },
@@ -100,6 +118,22 @@ export const router = createBrowserRouter([
       {
         path: 'help',
         element: <AdminHelp />,
+      },
+      {
+        path: 'help/dashboard-navigation',
+        element: <DashboardNavigationGuide />,
+      },
+      {
+        path: 'help/system-logs',
+        element: <SystemLogsGuide />,
+      },
+      {
+        path: 'help/conversation-management',
+        element: <ConversationManagementGuide />,
+      },
+      {
+        path: 'help/billing-analytics',
+        element: <BillingAnalyticsGuide />,
       },
       {
         path: 'reports',
