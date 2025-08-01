@@ -4,6 +4,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useConversation } from '@/contexts/ConversationContext';
 import { useSidebarNavigation } from '@/hooks/useSidebarNavigation';
 import { useEffect, useState } from 'react';
+import { useLocation } from 'react-router-dom';
 import { toast } from 'sonner';
 import { ChatSection } from './ChatSection';
 import { ConversationHistory } from './ConversationHistory';
@@ -15,6 +16,7 @@ export function DynamicSidebar({ ...props }: React.ComponentProps<typeof Sidebar
   const { user } = useAuth();
   const { state, createNewConversation, loadConversations, deleteConversation, setCurrentConversation, updateConversationTitle } = useConversation();
   const { navigateToConversation, navigateAfterDelete } = useSidebarNavigation();
+  const location = useLocation();
 
   const [editingConversation, setEditingConversation] = useState<{ id: string; title: string } | null>(null);
   const [showEditDialog, setShowEditDialog] = useState(false);
@@ -43,7 +45,7 @@ export function DynamicSidebar({ ...props }: React.ComponentProps<typeof Sidebar
         description: "The conversation has been removed from your history",
         duration: 3000,
       });
-      navigateAfterDelete(conversationId, state.conversations);
+      navigateAfterDelete(conversationId, state.conversations, location.pathname);
     } catch (error) {
       toast.error("Failed to delete conversation", {
         description: error instanceof Error ? error.message : "Please try again later",

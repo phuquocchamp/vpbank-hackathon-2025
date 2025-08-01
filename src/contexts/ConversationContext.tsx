@@ -211,6 +211,7 @@ export const ConversationProvider: React.FC<{ children: React.ReactNode }> = ({ 
 
   const loadConversation = useCallback(async (id: string): Promise<void> => {
     dispatch({ type: 'SET_LOADING', payload: true });
+    dispatch({ type: 'SET_ERROR', payload: null }); // Clear any previous errors
     try {
       // First check if conversation exists in current state
       const existingConversation = state.conversations.find(conv => conv.conversationId === id);
@@ -221,28 +222,55 @@ export const ConversationProvider: React.FC<{ children: React.ReactNode }> = ({ 
       }
 
       // If not found, fetch from API - use dynamic endpoint
-      const response = await fetch(`${API_BASE_URL}${getConversationEndpoint()}?id=${id}`);
-      if (!response.ok) throw new Error('Failed to load conversation');
+      const vpbankIdToken = localStorage.getItem('vpbank_id_token');
+      const response = await fetch(`${API_BASE_URL}${getConversationEndpoint()}/${id}`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${vpbankIdToken}`
+        }
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('Failed to load conversation:', response.status, errorText);
+
+        // Handle specific error cases
+        if (response.status === 404) {
+          // Conversation was deleted or doesn't exist
+          dispatch({ type: 'CLEAR_CURRENT_CONVERSATION' });
+          // Don't throw error for 404, just clear and stop loading
+          dispatch({ type: 'SET_LOADING', payload: false });
+          return;
+        }
+
+        throw new Error(`Failed to load conversation: ${response.status} ${response.statusText}`);
+      }
 
       const data = await response.json();
-      const rawConversation = data.conversations && data.conversations.length > 0 ? data.conversations[0] : null;
+      console.log('Loading conversation:', data);
 
-      if (rawConversation) {
+      if (data && data.id) {
         const conversation: Conversation = {
-          ...rawConversation,
-          createdAt: new Date(rawConversation.createdAt),
-          updatedAt: new Date(rawConversation.updatedAt),
-          messages: rawConversation.messages.map((msg: any) => ({
-            ...msg,
+          conversationId: data.conversationId || data.id,
+          userId: data.userId,
+          title: data.title,
+          messages: (data.messages || []).map((msg: any) => ({
+            id: msg.id,
+            content: msg.content,
+            role: msg.role.toLowerCase() === 'user' ? 'user' : 'assistant', // Normalize role case (handle "User", "user", "assistant")
             timestamp: new Date(msg.timestamp)
-          }))
+          })),
+          createdAt: new Date(data.createdAt),
+          updatedAt: new Date(data.updatedAt)
         };
 
         dispatch({ type: 'SET_CURRENT_CONVERSATION', payload: conversation });
       } else {
-        throw new Error('Conversation not found');
+        dispatch({ type: 'CLEAR_CURRENT_CONVERSATION' });
       }
     } catch (error) {
+      console.error('Error loading conversation:', error);
       dispatch({ type: 'SET_ERROR', payload: error instanceof Error ? error.message : 'Unknown error' });
     } finally {
       dispatch({ type: 'SET_LOADING', payload: false });
@@ -356,19 +384,27 @@ export const ConversationProvider: React.FC<{ children: React.ReactNode }> = ({ 
   }, [getConversationEndpoint, state.conversations]);
 
   const loadAllConversations = useCallback(async (): Promise<void> => {
+    // Nếu đang loading hoặc chưa có userId thì không gọi API
+    if (authLoading || !user?.id) {
+      dispatch({ type: 'SET_LOADING', payload: false });
+      return;
+    }
     dispatch({ type: 'SET_LOADING', payload: true });
     try {
       const vpbankIdToken = localStorage.getItem('vpbank_id_token');
 
       const response = await fetch(`${API_BASE_URL}${getConversationEndpoint()}`, {
+        method: 'PUT',
         headers: {
           'Authorization': `Bearer ${vpbankIdToken}`
-        }
+        },
+        body: JSON.stringify({ userId: user.id })
       });
 
       if (!response.ok) throw new Error('Failed to load conversations');
 
       const data = await response.json();
+      console.log('Conversations loaded:', data);
       // Extract conversations array from API response and parse dates
       const rawConversations = data.conversations || [];
       const conversations = rawConversations.map((conv: any) => ({
@@ -387,7 +423,7 @@ export const ConversationProvider: React.FC<{ children: React.ReactNode }> = ({ 
     } finally {
       dispatch({ type: 'SET_LOADING', payload: false });
     }
-  }, [getConversationEndpoint]);
+  }, [getConversationEndpoint, user?.id, authLoading]);
 
   const updateMessage = useCallback(async (conversationId: string, messageId: string, sql: string, database: string): Promise<void> => {
     try {
