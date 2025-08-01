@@ -221,7 +221,10 @@ export const ConversationProvider: React.FC<{ children: React.ReactNode }> = ({ 
       }
 
       // If not found, fetch from API - use dynamic endpoint
-      const response = await fetch(`${API_BASE_URL}${getConversationEndpoint()}?id=${id}`);
+      const response = await fetch(`${API_BASE_URL}${getConversationEndpoint()}/${id}`);
+      console.log('Loading conversation:', response);
+
+
       if (!response.ok) throw new Error('Failed to load conversation');
 
       const data = await response.json();
@@ -356,19 +359,27 @@ export const ConversationProvider: React.FC<{ children: React.ReactNode }> = ({ 
   }, [getConversationEndpoint, state.conversations]);
 
   const loadAllConversations = useCallback(async (): Promise<void> => {
+    // Nếu đang loading hoặc chưa có userId thì không gọi API
+    if (authLoading || !user?.id) {
+      dispatch({ type: 'SET_LOADING', payload: false });
+      return;
+    }
     dispatch({ type: 'SET_LOADING', payload: true });
     try {
       const vpbankIdToken = localStorage.getItem('vpbank_id_token');
 
       const response = await fetch(`${API_BASE_URL}${getConversationEndpoint()}`, {
+        method: 'PUT',
         headers: {
           'Authorization': `Bearer ${vpbankIdToken}`
-        }
+        },
+        body: JSON.stringify({ userId: user.id })
       });
 
       if (!response.ok) throw new Error('Failed to load conversations');
 
       const data = await response.json();
+      console.log('Conversations loaded:', data);
       // Extract conversations array from API response and parse dates
       const rawConversations = data.conversations || [];
       const conversations = rawConversations.map((conv: any) => ({
@@ -387,7 +398,7 @@ export const ConversationProvider: React.FC<{ children: React.ReactNode }> = ({ 
     } finally {
       dispatch({ type: 'SET_LOADING', payload: false });
     }
-  }, [getConversationEndpoint]);
+  }, [getConversationEndpoint, user?.id, authLoading]);
 
   const updateMessage = useCallback(async (conversationId: string, messageId: string, sql: string, database: string): Promise<void> => {
     try {

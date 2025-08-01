@@ -8,6 +8,7 @@ import { useParams } from 'react-router-dom';
 import { EmptyState } from '../../../components/conversation/EmptyState';
 import { MessageInput } from '../../../components/conversation/MessageInput';
 import { MessageItem } from '../../../components/conversation/MessageItem';
+import { LoadingSpinner } from '@/components/ui/loanding-spinner';
 
 const ClientConversation = () => {
   const { conversationId } = useParams<{ conversationId: string }>();
@@ -179,6 +180,9 @@ const ClientConversation = () => {
     }
   };
 
+  // Check if waiting for agent response (sending message)
+  const isWaitingAgent = state.loading && !!state.currentConversation;
+
   if (!conversationId) {
     return (
       <EmptyState
@@ -216,6 +220,12 @@ const ClientConversation = () => {
   return (
     <div className="conversation-container flex flex-col h-full bg-background">
       <div className="flex-1 min-h-0 overflow-hidden relative">
+        {/* Loading spinner when waiting for agent response */}
+        {isWaitingAgent && (
+          <div className="absolute inset-0 z-10 flex items-center justify-center bg-background/70">
+            <LoadingSpinner />
+          </div>
+        )}
         <ScrollArea className="conversation-scroll-area h-full">
           <div className="p-4 space-y-3 pb-32">
             {/* Query Error Display */}
