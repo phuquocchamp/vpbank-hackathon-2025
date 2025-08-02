@@ -28,6 +28,7 @@ interface AutomationTaskCardProps {
   onEdit: (task: AutomationTask) => void;
   onDelete: (taskId: string) => void;
   onExecute: (taskId: string) => void;
+  onQuickExecute?: (task: AutomationTask) => void;
   onToggleStatus: (taskId: string, status: 'active' | 'inactive') => void;
 }
 
@@ -35,7 +36,8 @@ const AutomationTaskCard: React.FC<AutomationTaskCardProps> = ({
   task, 
   onEdit, 
   onDelete, 
-  onExecute, 
+  onExecute,
+  onQuickExecute, 
   onToggleStatus 
 }) => {
   const getStatusIcon = (status: string) => {
@@ -131,6 +133,12 @@ const AutomationTaskCard: React.FC<AutomationTaskCardProps> = ({
                 <Play className="mr-2 h-4 w-4" />
                 Execute Now
               </DropdownMenuItem>
+              {onQuickExecute && (
+                <DropdownMenuItem onClick={() => onQuickExecute(task)}>
+                  <Zap className="mr-2 h-4 w-4" />
+                  Quick Execute
+                </DropdownMenuItem>
+              )}
               <DropdownMenuItem onClick={() => onEdit(task)}>
                 <Edit className="mr-2 h-4 w-4" />
                 Edit

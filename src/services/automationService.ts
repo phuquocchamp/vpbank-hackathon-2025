@@ -1,4 +1,11 @@
-import type { AutomationTask, CreateAutomationTaskRequest, UpdateAutomationTaskRequest, TaskResult } from '@/types/automation';
+import type { 
+  AutomationTask, 
+  CreateAutomationTaskRequest, 
+  UpdateAutomationTaskRequest, 
+  TaskResult, 
+  ExecuteTaskRequest,
+  ExecuteTaskResponse 
+} from '@/types/automation';
 
 export class AutomationService {
   private baseUrl: string;
@@ -126,6 +133,51 @@ export class AutomationService {
     }
   }
 
+  // Execute an automation task immediately with custom input
+  async executeTaskImmediately(params: {
+    taskId: string;
+    instruction: string;
+    userId: string;
+    userRole: 'User' | 'Admin';
+    coCodeLd?: string;
+  }): Promise<ExecuteTaskResponse> {
+    try {
+      const requestBody: ExecuteTaskRequest = {
+        inputText: params.instruction, // inputText should be the task instruction
+        taskId: params.taskId,
+        coCodeLd: params.coCodeLd || '',
+        userId: params.userId,
+        userRole: params.userRole,
+        conversationID: '' // Always empty string as per API specification
+      };
+
+      const response = await fetch(`${this.baseUrl}/analysis-task/execute`, {
+        method: 'POST',
+        headers: this.getHeaders(),
+        body: JSON.stringify(requestBody),
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const result = await response.json();
+      
+      return {
+        success: true,
+        message: result.message || 'Task executed successfully',
+        executionId: result.executionId,
+        data: result.data || result
+      };
+    } catch (error) {
+      console.error('Error executing automation task:', error);
+      return {
+        success: false,
+        message: error instanceof Error ? error.message : 'Failed to execute task'
+      };
+    }
+  }
+
   // Update an automation task
   async updateAutomationTask(id: string, request: UpdateAutomationTaskRequest): Promise<AutomationTask> {
     try {
@@ -148,9 +200,9 @@ export class AutomationService {
   }
 
   // Delete an automation task
-  async deleteAutomationTask(id: string): Promise<void> {
+  async deleteAutomationTask(taskId: string): Promise<void> {
     try {
-      const response = await fetch(`${this.baseUrl}/automation/tasks/${id}`, {
+      const response = await fetch(`${this.baseUrl}/analysis-task/delete/${taskId}`, {
         method: 'DELETE',
         headers: this.getHeaders(),
       });
@@ -164,20 +216,66 @@ export class AutomationService {
     }
   }
 
-  // Execute a task manually
-  async executeTask(id: string): Promise<TaskResult> {
+  // Activate an automation task
+  async activateAutomationTask(taskId: string): Promise<void> {
     try {
-      const response = await fetch(`${this.baseUrl}/automation/tasks/${id}/execute`, {
-        method: 'POST',
+      const response = await fetch(`${this.baseUrl}/analysis-task/activate/${taskId}`, {
+        method: 'GET',
         headers: this.getHeaders(),
       });
 
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
+    } catch (error) {
+      console.error('Error activating automation task:', error);
+      throw error;
+    }
+  }
 
-      const result = await response.json();
-      return result.data;
+  // Deactivate an automation task
+  async deactivateAutomationTask(taskId: string): Promise<void> {
+    try {
+      const response = await fetch(`${this.baseUrl}/analysis-task/deactivate/${taskId}`, {
+        method: 'GET',
+        headers: this.getHeaders(),
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+    } catch (error) {
+      console.error('Error deactivating automation task:', error);
+      throw error;
+    }
+  }
+
+  // Execute a task manually (deprecated - use executeTaskImmediately instead)
+  async executeTask(id: string, userId?: string, userRole?: 'User' | 'Admin'): Promise<TaskResult> {
+    try {
+      // For backwards compatibility, we'll use executeTaskImmediately with default parameters
+      const result = await this.executeTaskImmediately({
+        taskId: id,
+        instruction: "Execute scheduled task immediately", // Default instruction
+        userId: userId || "", // Use provided userId or empty string
+        userRole: userRole || "User",
+        coCodeLd: ""
+      });
+
+      if (!result.success) {
+        throw new Error(result.message || 'Failed to execute task');
+      }
+
+      // Convert ExecuteTaskResponse to TaskResult format for backwards compatibility
+      return {
+        id: result.executionId || Math.random().toString(),
+        executedAt: new Date().toISOString(),
+        status: result.success ? 'success' : 'error',
+        output: result.message || 'Task executed successfully',
+        errorMessage: result.success ? undefined : result.message,
+        duration: 0,
+        generatedContent: result.data ? JSON.stringify(result.data) : undefined
+      };
     } catch (error) {
       console.error('Error executing automation task:', error);
       throw error;
@@ -201,6 +299,99 @@ export class AutomationService {
     } catch (error) {
       console.error('Error fetching task results:', error);
       return [];
+    }
+  }
+
+  // Get all analysis tasks for a user (NEW API)
+  async getAnalysisTasks(userId: string): Promise<any[]> {
+    try {
+      const response = await fetch(`${this.baseUrl}/analysis-task/${userId}`, {
+        method: 'GET',
+        headers: this.getHeaders(),
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const result = await response.json();
+      return Array.isArray(result) ? result : (result.data || []);
+    } catch (error) {
+      console.error('Error fetching analysis tasks:', error);
+      throw error;
+    }
+  }
+
+  // Get S3 file content
+  async getS3FileContent(filePath: string): Promise<string> {
+    try {
+      const response = await fetch(`${this.baseUrl}/read-s3-file?uri=${encodeURIComponent(filePath)}`, {
+        method: 'GET',
+        headers: this.getHeaders(),
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const result = await response.text();
+      return result;
+    } catch (error) {
+      console.error('Error fetching S3 file content:', error);
+      throw error;
+    }
+  }
+
+  // Get admin logs (used by both admin and client with filtering)
+  async getAdminLogs(): Promise<any> {
+    try {
+      const response = await fetch(`${this.baseUrl}/admin/log`, {
+        method: 'GET',
+        headers: this.getHeaders(),
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const result = await response.json();
+      
+      // Parse the body string as JSON if it's a string
+      let parsedBody;
+      if (typeof result.body === 'string') {
+        parsedBody = JSON.parse(result.body);
+      } else {
+        parsedBody = result.body;
+      }
+      
+      return {
+        statusCode: result.statusCode,
+        headers: result.headers,
+        body: parsedBody
+      };
+    } catch (error) {
+      console.error('Error fetching admin logs:', error);
+      throw error;
+    }
+  }
+
+  // Get task tracking data for user
+  async getTaskTracking(userId: string): Promise<any> {
+    try {
+      const response = await fetch(`${this.baseUrl}/task-tracking/${userId}`, {
+        method: 'GET',
+        headers: this.getHeaders(),
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const result = await response.json();
+      return result;
+    } catch (error) {
+      console.error('Error fetching task tracking data:', error);
+      throw error;
     }
   }
 }

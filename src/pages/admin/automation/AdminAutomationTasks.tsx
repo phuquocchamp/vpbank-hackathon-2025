@@ -26,7 +26,7 @@ import {
   Calendar,
   RefreshCw
 } from 'lucide-react';
-import { AutomationTaskCard, CreateTaskDialog, TaskResultsDialog, AnalysisDataTable } from '@/components/automation';
+import { AutomationTaskCard, CreateTaskDialog, TaskResultsDialog, AnalysisResultsTable, ExecuteTaskDialog } from '@/components/automation';
 import type { AutomationTask, CreateAutomationTaskRequest } from '@/types/automation';
 
 const AdminAutomationTasks = () => {
@@ -34,13 +34,17 @@ const AdminAutomationTasks = () => {
   const { user } = useAuth();
   const { 
     tasks, 
+    analysisTasks,
     isLoading, 
     error, 
     createTask, 
-    updateTask, 
-    deleteTask, 
-    executeTask, 
-    fetchTasks 
+    // updateTask, 
+    deleteTask,
+    activateTask,
+    deactivateTask,
+    executeTaskImmediately, 
+    fetchTasks,
+    getS3FileContent
   } = useAutomationTasks(user?.id || '');
 
   const [searchQuery, setSearchQuery] = useState('');
@@ -48,6 +52,8 @@ const AdminAutomationTasks = () => {
   const [categoryFilter, setCategoryFilter] = useState<string>('all');
   const [selectedTask, setSelectedTask] = useState<AutomationTask | null>(null);
   const [showResults, setShowResults] = useState(false);
+  const [showExecuteDialog, setShowExecuteDialog] = useState(false);
+  const [taskToExecute, setTaskToExecute] = useState<AutomationTask | null>(null);
 
   // Set header information
   useEffect(() => {
@@ -107,16 +113,56 @@ const AdminAutomationTasks = () => {
 
   // Handle task execution
   const handleExecuteTask = async (taskId: string) => {
-    const result = await executeTask(taskId);
-    if (result) {
-      console.log('Task executed:', result);
-      // Optionally show results dialog
+    if (!user?.id) {
+      console.error('User not authenticated');
+      return;
     }
+
+    // Find the task to get its instruction
+    const task = tasks.find(t => t.id === taskId);
+    const instruction = task?.instruction || "Execute scheduled task immediately";
+
+    const result = await executeTaskImmediately({
+      taskId,
+      instruction, // Use the task's instruction instead of generic text
+      userId: user.id,
+      userRole: "Admin", // Since this is the admin page
+      coCodeLd: "" // Empty as specified in requirements
+    });
+
+    if (result?.success) {
+      console.log('Task executed successfully:', result);
+      // Optionally show results or refresh tasks
+      await fetchTasks();
+    } else {
+      console.error('Task execution failed:', result?.message);
+    }
+  };
+
+  // Handle quick execute with custom input
+  const handleQuickExecute = (task: AutomationTask) => {
+    setTaskToExecute(task);
+    setShowExecuteDialog(true);
+  };
+
+  // Wrapper for ExecuteTaskDialog to handle parameter mapping
+  const handleDialogExecute = async (params: {
+    taskId: string;
+    instruction: string;
+    userId: string;
+    userRole: 'User' | 'Admin';
+    coCodeLd?: string;
+  }) => {
+    return await executeTaskImmediately(params);
   };
 
   // Handle status toggle
   const handleToggleStatus = async (taskId: string, newStatus: 'active' | 'inactive') => {
-    await updateTask(taskId, { status: newStatus });
+    if (newStatus === 'active') {
+      await activateTask(taskId);
+    } else {
+      await deactivateTask(taskId);
+    }
   };
 
   // Show task results
@@ -296,6 +342,7 @@ const AdminAutomationTasks = () => {
                   onEdit={handleEditTask}
                   onDelete={handleDeleteTask}
                   onExecute={handleExecuteTask}
+                  onQuickExecute={handleQuickExecute}
                   onToggleStatus={handleToggleStatus}
                 />
               ))}
@@ -359,6 +406,15 @@ const AdminAutomationTasks = () => {
                         Run
                       </Button>
                       <Button
+                        variant="secondary"
+                        size="sm"
+                        onClick={() => handleQuickExecute(task)}
+                        disabled={!task.id}
+                        className="text-xs"
+                      >
+                        Quick Execute
+                      </Button>
+                      <Button
                         variant="ghost"
                         size="sm"
                         onClick={() => handleEditTask(task)}
@@ -385,7 +441,10 @@ const AdminAutomationTasks = () => {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <AnalysisDataTable tasks={tasks} />
+              <AnalysisResultsTable 
+                analysisTasks={analysisTasks} 
+                onGetS3Content={getS3FileContent}
+              />
             </CardContent>
           </Card>
         </TabsContent>
@@ -400,6 +459,14 @@ const AdminAutomationTasks = () => {
           results={selectedTask?.results || []}
         />
       )}
+
+      {/* Execute Task Dialog */}
+      <ExecuteTaskDialog
+        task={taskToExecute}
+        open={showExecuteDialog}
+        onOpenChange={setShowExecuteDialog}
+        onExecute={handleDialogExecute}
+      />
     </div>
   );
 };

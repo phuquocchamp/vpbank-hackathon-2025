@@ -68,3 +68,44 @@ export interface UpdateAutomationTaskRequest {
   status?: 'active' | 'inactive';
   category?: 'trading-analysis' | 'customer-analytics' | 'risk-analysis' | 'reporting' | 'maintenance' | 'notification' | 'custom';
 }
+
+export interface ExecuteTaskRequest {
+  inputText: string;
+  taskId: string;
+  coCodeLd: string;
+  userId: string;
+  userRole: 'User' | 'Admin';
+  conversationID: string; // Always empty string according to API spec
+}
+
+export interface ExecuteTaskResponse {
+  success: boolean;
+  message?: string;
+  executionId?: string;
+  data?: any;
+}
+
+// New API response types for analysis tasks
+export interface AnalysisTaskResult {
+  executeTime: string;
+  filePath: string;
+  status: 'success' | 'error';
+}
+
+export interface AnalysisTask {
+  event: {
+    scheduleType: 'one-time' | 'recurring';
+    time: string;
+    frequency?: 'daily' | 'weekly' | 'monthly';
+    dayOfWeek?: string;
+    dayOfMonth?: string;
+  };
+  taskId: string;
+  userId: string;
+  instruction: string;
+  status: string;
+  category: string;
+  createdAt: string;
+  result: AnalysisTaskResult[];
+  title: string;
+}

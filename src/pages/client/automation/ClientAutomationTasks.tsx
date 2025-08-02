@@ -25,7 +25,7 @@ import {
   TrendingUp,
   BarChart3
 } from 'lucide-react';
-import { AutomationTaskCard, CreateTaskDialog, AnalysisDataTable } from '@/components/automation';
+import { AutomationTaskCard, CreateTaskDialog, AnalysisResultsTable } from '@/components/automation';
 import type { AutomationTask, CreateAutomationTaskRequest } from '@/types/automation';
 
 const ClientAutomationTasks = () => {
@@ -33,13 +33,17 @@ const ClientAutomationTasks = () => {
   const { user } = useAuth();
   const { 
     tasks, 
+    analysisTasks,
     isLoading, 
     error, 
     createTask, 
-    updateTask, 
-    deleteTask, 
-    executeTask, 
-    fetchTasks 
+    // updateTask, 
+    deleteTask,
+    activateTask,
+    deactivateTask,
+    executeTaskImmediately, 
+    fetchTasks,
+    getS3FileContent
   } = useAutomationTasks(user?.id || '');
 
   const [searchQuery, setSearchQuery] = useState('');
@@ -98,15 +102,39 @@ const ClientAutomationTasks = () => {
 
   // Handle task execution
   const handleExecuteTask = async (taskId: string) => {
-    const result = await executeTask(taskId);
-    if (result) {
-      console.log('Task executed:', result);
+    if (!user?.id) {
+      console.error('User not authenticated');
+      return;
+    }
+
+    // Find the task to get its instruction
+    const task = tasks.find(t => t.id === taskId);
+    const instruction = task?.instruction || "Execute scheduled task immediately";
+
+    const result = await executeTaskImmediately({
+      taskId,
+      instruction, // Use the task's instruction instead of generic text
+      userId: user.id,
+      userRole: "User", // Since this is the client page
+      coCodeLd: "" // Empty as specified in requirements
+    });
+
+    if (result?.success) {
+      console.log('Task executed successfully:', result);
+      // Optionally show results or refresh tasks
+      await fetchTasks();
+    } else {
+      console.error('Task execution failed:', result?.message);
     }
   };
 
   // Handle status toggle
   const handleToggleStatus = async (taskId: string, newStatus: 'active' | 'inactive') => {
-    await updateTask(taskId, { status: newStatus });
+    if (newStatus === 'active') {
+      await activateTask(taskId);
+    } else {
+      await deactivateTask(taskId);
+    }
   };
 
   // Calculate user statistics
@@ -304,7 +332,10 @@ const ClientAutomationTasks = () => {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <AnalysisDataTable tasks={tasks} />
+                <AnalysisResultsTable 
+                  analysisTasks={analysisTasks} 
+                  onGetS3Content={getS3FileContent}
+                />
               </CardContent>
             </Card>
           </TabsContent>
