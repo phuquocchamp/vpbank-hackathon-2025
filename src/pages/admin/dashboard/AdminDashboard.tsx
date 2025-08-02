@@ -35,7 +35,7 @@ const AdminDashboard = () => {
   useEffect(() => {
     setHeaderInfo({
       title: 'Admin Dashboard',
-      description: 'Real-time system monitoring and log analytics overview',
+      description: 'Real-time system monitoring and financial analytics overview',
       badge: (
         <Badge variant="outline" className="text-xs">
           <Activity className="size-3 mr-1" />
@@ -61,7 +61,7 @@ const AdminDashboard = () => {
   return (
     <div className="space-y-6 admin-dashboard-container">
       {/* Quick Overview Section */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 lg:gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-4 gap-4 lg:gap-6">
         <div className="bg-gradient-to-r from-blue-50 to-indigo-100 dark:from-blue-950 dark:to-indigo-900 p-6 rounded-lg border shadow-sm">
           <div className="flex items-center justify-between">
             <div>

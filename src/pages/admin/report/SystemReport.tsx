@@ -1,14 +1,17 @@
 import { useState, useEffect } from 'react';
 import { useAdminData } from '@/hooks/useAdminData';
+import { useAutomationTasks } from '@/hooks/useAutomationTasks';
 import { useHeader } from '@/contexts/HeaderContext';
 import { Badge } from '@/components/ui/badge';
-import { FileText, BarChart3, Target } from 'lucide-react';
+import { FileText, BarChart3, Target, Zap } from 'lucide-react';
 import SystemLogsTable from '@/components/admin/SystemLogsTable';
+import { AnalysisDataTable } from '@/components/automation';
 import TaskTracking from '@/components/common/TaskTracking';
 import { useAuth } from '@/contexts/AuthContext';
 
 const SystemReport = () => {
   const { setHeaderInfo } = useHeader();
+  const { user } = useAuth();
 
   // Pagination states for logs
   const [currentPage, setCurrentPage] = useState(1);
@@ -23,7 +26,8 @@ const SystemReport = () => {
     fetchLogs,
   } = useAdminData();
 
-  const { user } = useAuth();
+  // Use automation tasks hook
+  const { tasks: automationTasks } = useAutomationTasks(user?.id || '');
 
   // Ensure logs array is always valid - only if we have valid data from API
   const validLogs = logData && Array.isArray(logData.body) ? logData.body : [];
@@ -90,6 +94,16 @@ const SystemReport = () => {
           <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Task Management Reports</h2>
         </div>
         <TaskTracking userId={user?.id} />
+      </div>
+
+      {/* AI Analysis Results Section */}
+      <div className="space-y-4">
+        <div className="flex items-center gap-2">
+          <Zap className="h-5 w-5 text-orange-600 dark:text-orange-400" />
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">AI Analysis Results</h2>
+          <Badge variant="outline" className="text-xs">System-wide Analytics</Badge>
+        </div>
+        <AnalysisDataTable tasks={automationTasks} />
       </div>
 
       {/* System Logs Section */}
