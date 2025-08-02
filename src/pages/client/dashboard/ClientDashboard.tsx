@@ -32,7 +32,7 @@ const ClientDashboard = () => {
       <TaskTracking userId={user?.id} />
 
       {/* System Logs Section */}
-      <SystemLogs userId={user?.id || ''} userEmail={user?.email} />
+      <SystemLogs userId={user?.id || ''} />
     </div>
   );
 };

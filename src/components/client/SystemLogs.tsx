@@ -27,17 +27,15 @@ interface LogData {
 
 interface SystemLogsProps {
   userId: string;
-  userEmail?: string;
   className?: string;
 }
 
-const SystemLogs = ({ userId, userEmail, className = '' }: SystemLogsProps) => {
+const SystemLogs = ({ userId, className = '' }: SystemLogsProps) => {
   const [logData, setLogData] = useState<LogData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState('all');
   const [currentPage, setCurrentPage] = useState(1);
-  const [showAllLogs, setShowAllLogs] = useState(false); // Debug toggle
   const itemsPerPage = 10;
 
   const BASE_URL = import.meta.env.VITE_API_BASE_URL;
@@ -179,17 +177,10 @@ const SystemLogs = ({ userId, userEmail, className = '' }: SystemLogsProps) => {
   const validLogs = logData && Array.isArray(logData.body) ? logData.body : [];
   console.log('Valid logs before filtering:', validLogs); // Debug log
   
-  // Filter logs by user email if provided - with null safety
-  const userFilteredLogs = (userEmail && !showAllLogs)
-    ? validLogs.filter((log: LogEntry) => {
-        const isMatch = log.user_name && userEmail && 
-               log.user_name.toLowerCase() === userEmail.toLowerCase();
-        console.log(`Filtering log for user ${log.user_name} vs ${userEmail}:`, isMatch); // Debug log
-        return isMatch;
-      })
-    : validLogs;
+  // Always show all logs - no user filtering
+  const userFilteredLogs = validLogs;
   
-  console.log('User filtered logs:', userFilteredLogs); // Debug log
+  console.log('All logs (no filtering):', userFilteredLogs); // Debug log
   
   const getFilteredLogs = (tab: string) => {
     switch (tab) {
@@ -287,7 +278,7 @@ const SystemLogs = ({ userId, userEmail, className = '' }: SystemLogsProps) => {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Terminal className="h-5 w-5" />
-            My Activity Logs
+            System Activity Logs
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -306,42 +297,23 @@ const SystemLogs = ({ userId, userEmail, className = '' }: SystemLogsProps) => {
         <div className="flex items-center justify-between">
           <CardTitle className="flex items-center gap-2">
             <Terminal className="h-5 w-5" />
-            My Activity Logs
+            System Activity Logs
           </CardTitle>
-          <div className="flex gap-2">
-            {process.env.NODE_ENV === 'development' && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setShowAllLogs(!showAllLogs)}
-              >
-                {showAllLogs ? 'Filter by User' : 'Show All'}
-              </Button>
-            )}
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={fetchLogs}
-              disabled={isLoading}
-            >
-              <RefreshCw className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
-              Refresh
-            </Button>
-          </div>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={fetchLogs}
+            disabled={isLoading}
+          >
+            <RefreshCw className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
+            Refresh
+          </Button>
         </div>
       </CardHeader>
       <CardContent>
         {error && (
           <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-md">
             <p className="text-sm text-red-600">{error}</p>
-          </div>
-        )}
-
-        {!userEmail && (
-          <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-md">
-            <p className="text-sm text-blue-600">
-              Showing all system logs. User email not provided for filtering.
-            </p>
           </div>
         )}
 
@@ -362,8 +334,7 @@ const SystemLogs = ({ userId, userEmail, className = '' }: SystemLogsProps) => {
             {/* Debug info */}
             {process.env.NODE_ENV === 'development' && (
               <div className="mb-4 p-2 bg-gray-100 dark:bg-gray-800 rounded text-xs">
-                <p>Debug: Total logs: {validLogs.length}, User filtered: {userFilteredLogs.length}, Tab filtered: {filteredLogs.length}</p>
-                <p>User email: {userEmail || 'Not provided'}</p>
+                <p>Debug: Total logs: {validLogs.length}, Showing: {filteredLogs.length}</p>
               </div>
             )}
             
@@ -371,11 +342,6 @@ const SystemLogs = ({ userId, userEmail, className = '' }: SystemLogsProps) => {
               <div className="text-center py-8">
                 <Terminal className="h-12 w-12 mx-auto text-gray-300 mb-4" />
                 <p className="text-gray-500">No logs found for this category</p>
-                {userEmail && userFilteredLogs.length === 0 && validLogs.length > 0 && (
-                  <p className="text-xs text-gray-400 mt-2">
-                    No logs found for user: {userEmail}. Total logs available: {validLogs.length}
-                  </p>
-                )}
               </div>
             ) : (
               <div className="space-y-2">
