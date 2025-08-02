@@ -1,4 +1,4 @@
-import { Activity, Database, FileText, HelpCircle, Home, Users } from 'lucide-react';
+import { Activity, Database, FileText, HelpCircle, Home, Users, Zap } from 'lucide-react';
 import { ADMIN_ROUTES, CLIENT_ROUTES } from '@/config/routes';
 
 export interface MenuItem {
@@ -14,6 +14,12 @@ export const menuItems: MenuItem[] = [
     title: 'Dashboard',
     url: '/client',
     icon: Home,
+    roles: ['USER'],
+  },
+  {
+    title: 'AI Analysis',
+    url: CLIENT_ROUTES.AUTOMATION_TASKS,
+    icon: Zap,
     roles: ['USER'],
   },
   {
@@ -38,6 +44,12 @@ export const menuItems: MenuItem[] = [
     title: 'Knowledge Base',
     url: ADMIN_ROUTES.KNOWLEDGE_BASE,
     icon: Database,
+    roles: ['ADMIN'],
+  },
+  {
+    title: 'AI Analysis',
+    url: ADMIN_ROUTES.AUTOMATION_TASKS,
+    icon: Zap,
     roles: ['ADMIN'],
   },
   {

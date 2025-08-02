@@ -8,6 +8,7 @@ export { default as PaginationControls } from './PaginationControls';
 export { default as LogTableRow } from './LogTableRow';
 export { LogTableHeader } from './LogTableRow';
 export { default as LogFilterBar } from './LogFilterBar';
+export { default as AutomationResultsTable } from './AutomationResultsTable';
 
 export { default as FileUpload } from './FileUpload';
 export { default as KnowledgeForm } from './KnowledgeForm';

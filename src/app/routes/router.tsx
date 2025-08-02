@@ -28,6 +28,10 @@ import SystemLogsGuide from '../../pages/admin/help/guides/SystemLogsGuide';
 import ConversationManagementGuide from '../../pages/admin/help/guides/ConversationManagementGuide';
 import BillingAnalyticsGuide from '../../pages/admin/help/guides/BillingAnalyticsGuide';
 
+// Automation pages
+import AdminAutomationTasks from '../../pages/admin/automation/AdminAutomationTasks';
+import ClientAutomationTasks from '../../pages/client/automation/ClientAutomationTasks';
+
 
 // Create router
 export const router = createBrowserRouter([
@@ -72,6 +76,10 @@ export const router = createBrowserRouter([
         element: <ClientConversation />,
       },
       {
+        path: 'automation-tasks',
+        element: <ClientAutomationTasks />,
+      },
+      {
         path: 'help',
         element: <Helps />,
       },
@@ -114,6 +122,10 @@ export const router = createBrowserRouter([
       {
         path: 'conversations/:conversationId',
         element: <AdminConversation />,
+      },
+      {
+        path: 'automation-tasks',
+        element: <AdminAutomationTasks />,
       },
       {
         path: 'help',
